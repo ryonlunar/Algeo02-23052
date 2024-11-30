@@ -1,4 +1,3 @@
-// Navbar.tsx
 import React, { useState } from "react";
 import { Link } from "react-router-dom"; // Import Link untuk routing
 import "./Navbar.css";  
@@ -17,7 +16,7 @@ const Navbar = () => {
     <nav className="navbar">
       <div className="navbar-logo">
         <img src={logo} alt="Logo" className="logo" />
-        <span className="navbar-title">BRRMusic</span>
+        <span className="navbar-title">BARMusic</span>
       </div>
 
       <button className="hamburger" onClick={toggleMenu}>
