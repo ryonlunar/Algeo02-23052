@@ -93,7 +93,6 @@
   /* Tombol hamburger */
   .hamburger {
     display: none; /* Sembunyikan hamburger di desktop */
-    flex-direction: row;
     font-size: 30px;
     background: none;
     border: none;
@@ -106,7 +105,6 @@
   @media (max-width: 768px) {
     .navbar {
       flex-direction: row; /* Navbar akan beralih menjadi vertikal pada layar kecil */
-      display: flex;
       height: auto; /* Menyesuaikan tinggi navbar */
       padding: 10px;
     }
@@ -134,7 +132,6 @@
   
     .navbar-buttons.show {
       display: flex; /* Menampilkan tombol navigasi jika hamburger ditekan */
-      flex-direction: column;
       width: 100%;
     }
   
@@ -144,7 +141,6 @@
   
     .hamburger {
       display: flex; /* Menampilkan tombol hamburger pada layar kecil */
-      flex-direction: column;
     }
   }
   
