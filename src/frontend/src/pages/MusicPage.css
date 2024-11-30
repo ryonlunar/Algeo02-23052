@@ -1,44 +1,59 @@
 /* MusicPage Styling */
 .music-page-main {
-    background-color: #0e3a5e;
+    background-color: #0e3a5e; /* Pastikan seluruh halaman memiliki warna latar yang konsisten */
     color: white;
     display: flex;
     flex-direction: column;
     padding: 20px;
     flex: 1;
-    margin-left: 300px;  /*Memberikan ruang untuk sidebar */
-    margin-top: 60px;  /* Memberikan ruang untuk navbar */
+    width: auto;
+    margin-left: 300px;  /* Memberikan ruang untuk sidebar */
+    margin-top: 60px;    /* Memberikan ruang untuk navbar */
     box-sizing: border-box;
-  }
-  
-  .music-grid {
+    height: 100vh; /* Menggunakan tinggi penuh layar */
+}
+
+/* Music Grid */
+.music-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 20px;
+    grid-template-columns: repeat(6, 1fr); /* Menampilkan 6 kolom */
+    grid-template-rows: repeat(2,1fr);
+    gap: 40px;
     padding: 20px;
-  }
-  
-  .music-item {
-    background-color: #1b4d73;
+}
+
+/* Music Item */
+.music-item {
+    background-color: #1b4d73; /* Warna latar belakang musik item sesuai tema */
     border-radius: 10px;
     text-align: center;
     padding: 10px;
-  }
-  
-  .music-thumbnail {
-    width: 100%;
-    height: 100px;
-    background-color: #d3d3d3;
+    transition: transform 0.2s ease-in-out;
+    color: white; /* Pastikan teks terlihat dengan warna putih */
+}
+
+.music-item:hover {
+    transform: scale(1.05); /* Menambahkan efek hover */
+}
+
+/* Music Thumbnail */
+.music-thumbnail {
+    width: 148px;
+    height: 148px;
+    background-color: #d3d3d3; /* Atur latar belakang thumbnail, bisa sesuaikan */
     border-radius: 10px;
     margin-bottom: 10px;
-  }
-  
-  /* Pagination */
-  .pagination {
+}
+
+/* Pagination */
+.pagination {
     text-align: center;
-  }
-  
-  .pagination-button {
+    margin-top: 20px;
+    background-color: #0e3a5e; /* Konsisten dengan latar belakang halaman utama */
+    padding: 10px 0;
+}
+
+.pagination-button {
     background-color: #1b4d73;
     color: white;
     border: none;
@@ -46,9 +61,39 @@
     margin: 0 5px;
     border-radius: 5px;
     cursor: pointer;
-  }
-  
-  .pagination-button:hover {
-    background-color: #14506e;
-  }
-  
+    transition: background-color 0.3s ease;
+}
+
+.pagination-button:hover {
+    background-color: #14506e; /* Sesuaikan warna saat tombol dihover */
+}
+
+.pagination-button:disabled {
+    background-color: #666;
+    cursor: not-allowed;
+}
+
+/* Active pagination button */
+.pagination-button.active {
+    background-color: #14506e; /* Menandai tombol aktif */
+    font-weight: bold;
+}
+
+/* Responsif: Menyesuaikan grid untuk perangkat kecil */
+@media (max-width: 1024px) {
+    .music-grid {
+        grid-template-columns: repeat(4, 1fr); /* 4 kolom pada layar lebih kecil */
+    }
+}
+
+@media (max-width: 768px) {
+    .music-grid {
+        grid-template-columns: repeat(2, 1fr); /* 2 kolom pada layar lebih kecil */
+    }
+}
+
+@media (max-width: 480px) {
+    .music-grid {
+        grid-template-columns: 1fr; /* 1 kolom pada layar sangat kecil */
+    }
+}
