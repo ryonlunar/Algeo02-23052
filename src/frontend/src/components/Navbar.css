@@ -1,0 +1,89 @@
+/* Styling untuk Navbar */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #47a3e6; /* Warna background navbar */
+    padding: 10px 15px;
+    height: 60px; /* Ukuran tinggi navbar */
+    position: fixed; /* Membuat navbar tetap di atas saat scroll */
+    top: 0;
+    left: 0;
+    width: 100%; /* Membuat navbar lebar penuh */
+    z-index: 1000; /* Pastikan navbar berada di atas elemen lain */
+}
+
+.navbar-logo {
+    display: flex;
+    align-items: center;
+}
+
+.logo {
+    width: 50px; /* Ukuran logo */
+    height: 50px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.navbar-title {
+    font-size: 22px; /* Ukuran font untuk judul */
+    color: white;
+    font-weight: bold;
+}
+
+/* Search bar */
+.navbar-search {
+    display: flex;
+    align-items: center;
+}
+
+.search-input {
+    width: 400px; /* Lebar search bar */
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px 0 0 5px;
+    outline: none;
+    font-size: 16px;
+}
+
+.search-button {
+    padding: 6.4px 12px;
+    background-color: white;
+    color: black;
+    border: none;
+    border-radius: 0 5px 5px 0;
+    cursor: pointer;
+}
+
+.search-button:hover {
+    background-color: #ccc; /* Warna saat hover */
+}
+
+/* Tombol navigasi */
+.navbar-buttons {
+    display: flex;
+    justify-content: center; /* Mengatur tombol agar berada di tengah */
+    gap: 20px; /* Menjaga jarak antar tombol */
+    padding: 0 50px; /* Menambah jarak di kiri dan kanan tombol */
+}
+
+.nav-button {
+    padding: 10px 20px;
+    background-color: #252b5c;
+    color: white;
+    border: none; /* Menghapus border default */
+    border-radius: 30px;
+    cursor: pointer;
+    min-width: 100px; /* Memastikan tombol memiliki lebar minimal */
+    text-align: center;
+}
+
+.nav-button:hover {
+    background-color: #1b2047;
+}
+
+/* Konten di bawah navbar */
+.content {
+    margin-top: 80px; /* Memberikan ruang agar konten tidak tertutup navbar yang fixed */
+    padding: 20px;
+}
