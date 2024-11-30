@@ -1,17 +1,16 @@
-import Sidebar from './components/Sidebar.tsx';
-
+import './App.css';
+import Navbar from './components/Navbar'; // Import Navbar
 
 function App() {
-
   return (
-    <div className="h-screen bg-black">
-      <div className="h-[90%] flex">
-        <Sidebar />
-        </div>
-        
+    <div className="App">
+      <Navbar />
+      <div className="content">
+        <h1>Welcome to BRRMusic</h1>
+        <p>Explore your favorite music and albums.</p>
+      </div>
     </div>
-    
-  )
+  );
 }
 
-export default App
+export default App;
