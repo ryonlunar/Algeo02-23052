@@ -1,10 +1,10 @@
 /* Container utama sidebar */
 .sidebar {
-    width: 200px; /* Lebar sidebar */
+    width: 300px; /* Lebar sidebar */
     height: 100vh; /* Tinggi penuh */
     background-color: #002D57; /* Warna biru tua */
     position: fixed; /* Posisi fixed agar sidebar tetap di tempat */
-    top: 0; /* Posisi di bagian atas */
+    top: 60px; /* Posisi di bagian atas */
     left: 0; /* Posisi di sisi kiri */
     display: flex;
     flex-direction: column;
@@ -16,8 +16,8 @@
   
   /* Placeholder box */
   .placeholder {
-    width: 150px;
-    height: 100px;
+    width: 240px;
+    height: 150px;
     background-color: #D3D3D3; /* Warna abu-abu terang */
     display: flex;
     align-items: center;

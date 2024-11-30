@@ -11,7 +11,7 @@ const App = () => {
         {/* Sidebar tetap di kiri */}
         <Sidebar />
         
-        <div style={{ flex: 1, marginLeft: "20px"}}> {/* Memberikan margin kiri agar konten utama tidak tumpang tindih */}
+        <div style={{ flex: 1}}> {/* Memberikan margin kiri agar konten utama tidak tumpang tindih */}
           <Navbar />
           <Routes>
             <Route path="/" element={<AlbumPage />} />

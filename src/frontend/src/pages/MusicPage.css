@@ -6,14 +6,14 @@
     flex-direction: column;
     padding: 20px;
     flex: 1;
-    margin-left: 180px;  /*Memberikan ruang untuk sidebar */
+    margin-left: 300px;  /*Memberikan ruang untuk sidebar */
     margin-top: 60px;  /* Memberikan ruang untuk navbar */
     box-sizing: border-box;
   }
   
   .music-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 20px;
     padding: 20px;
   }
