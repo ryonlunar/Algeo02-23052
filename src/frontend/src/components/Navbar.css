@@ -3,7 +3,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #47a3e6; /* Warna background navbar */
+    background-color: #19376D; /* Warna background navbar */
     padding: 10px 15px;
     height: 60px; /* Ukuran tinggi navbar */
     position: fixed; /* Membuat navbar tetap di atas saat scroll */
@@ -77,7 +77,7 @@
   
   .nav-button {
     padding: 10px 20px;
-    background-color: #252b5c;
+    background-color: #0F67B1;
     color: white;
     border: none; /* Menghapus border default */
     border-radius: 30px;
