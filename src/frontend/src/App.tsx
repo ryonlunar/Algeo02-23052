@@ -7,18 +7,12 @@ import MusicPage from "./pages/MusicPage";
 const App = () => {
   return (
     <Router>
-      <div style={{ display: "flex" }}>
-        {/* Sidebar tetap di kiri */}
         <Sidebar />
-        
-        <div style={{ flex: 1}}> {/* Memberikan margin kiri agar konten utama tidak tumpang tindih */}
-          <Navbar />
+        <Navbar />
           <Routes>
             <Route path="/" element={<AlbumPage />} />
             <Route path="/music" element={<MusicPage />} />
           </Routes>
-        </div>
-      </div>
     </Router>
   );
 };
