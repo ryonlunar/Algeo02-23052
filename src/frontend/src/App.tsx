@@ -10,7 +10,7 @@ const App = () => {
         <Sidebar />
         <Navbar />
           <Routes>
-            <Route path="/" element={<AlbumPage />} />
+            <Route path="/album" element={<AlbumPage />} />
             <Route path="/music" element={<MusicPage />} />
           </Routes>
     </Router>
