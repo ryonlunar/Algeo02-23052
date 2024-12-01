@@ -1,0 +1,48 @@
+/* Container utama sidebar */
+.sidebar {
+    width: 300px; /* Lebar sidebar */
+    height: 100vh; /* Tinggi penuh */
+    background-color: #002D57; /* Warna biru tua */
+    position: fixed; /* Posisi fixed agar sidebar tetap di tempat */
+    top: 60px; /* Posisi di bagian atas */
+    left: 0; /* Posisi di sisi kiri */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+    z-index: 1; /* Pastikan sidebar tetap di atas konten */
+  }
+  
+  /* Placeholder box */
+  .placeholder {
+    width: 240px;
+    height: 150px;
+    background-color: #D3D3D3; /* Warna abu-abu terang */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px; /* Jarak ke tombol */
+    border-radius: 8px; /* Sudut melengkung */
+    font-size: 16px;
+    color: black;
+  }
+  
+  /* Tombol sidebar */
+  .sidebar-button {
+    width: 150px;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #004B8D; /* Warna biru */
+    color: white;
+    border: none;
+    border-radius: 5px; /* Sudut melengkung */
+    cursor: pointer;
+    font-size: 14px;
+    text-align: center;
+  }
+  
+  .sidebar-button:hover {
+    background-color: #007ACC; /* Warna biru lebih terang saat hover */
+  }
+  
