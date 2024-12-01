@@ -38,8 +38,8 @@
 
 /* Album Cover (ubah ukuran menjadi 1x1) */
 .album-cover img {
-    width: 148px; /* Menggunakan 100% lebar dari container */
-    height: 148px; /* Memastikan gambar tetap persegi */
+    width: 143px; /* Menggunakan 100% lebar dari container */
+    height: 143px; /* Memastikan gambar tetap persegi */
     object-fit: cover; /* Menjaga rasio aspek agar gambar tidak terdistorsi */
     border-radius: 10px;
     margin-bottom: 15px;
