@@ -4,8 +4,7 @@
     color: white;
     display: flex;
     flex-direction: column;
-    padding-left: 20px;
-    padding-right: 18px;
+    padding : 10px;
     flex: 1;
     margin-left: 300px;  /* Memberikan ruang untuk sidebar */
     margin-top: 60px;    /* Memberikan ruang untuk navbar */
@@ -24,6 +23,8 @@
 /* Album Item */
 .album-item {
     background-color: #1b4d73; /* Warna latar belakang album item */
+    width: 148px; /* Menggunakan 100% lebar dari container */
+    height: 148px; /* Memastikan gambar tetap persegi */
     border-radius: 10px;
     text-align: center;
     padding: 10px;
