@@ -1,89 +1,149 @@
 /* Styling untuk Navbar */
 .navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #47a3e6; /* Warna background navbar */
-    padding: 10px 15px;
-    height: 60px; /* Ukuran tinggi navbar */
-    position: fixed; /* Membuat navbar tetap di atas saat scroll */
-    top: 0;
-    left: 0;
-    width: 100%; /* Membuat navbar lebar penuh */
-    z-index: 1000; /* Pastikan navbar berada di atas elemen lain */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #19376D; /* Warna background navbar */
+  padding: 10px 15px;
+  height: 60px; /* Ukuran tinggi navbar */
+  position: fixed; /* Membuat navbar tetap di atas saat scroll */
+  top: 0;
+  left: 0;
+  width: 100%; /* Membuat navbar lebar penuh */
+  z-index: 1000; /* Pastikan navbar berada di atas elemen lain */
+  box-sizing: border-box; /* Menghindari overflow dari padding */
 }
 
+/* Styling untuk Navbar Logo dan Title */
 .navbar-logo {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
+  margin-right: auto; /* Dorong elemen logo ke kiri */
 }
 
 .logo {
-    width: 50px; /* Ukuran logo */
-    height: 50px;
-    border-radius: 50%;
-    margin-right: 10px;
+  width: 50px; /* Ukuran logo */
+  height: 50px;
+  border-radius: 50%;
+  margin-right: 10px;
 }
 
 .navbar-title {
-    font-size: 22px; /* Ukuran font untuk judul */
-    color: white;
-    font-weight: bold;
+  font-size: 22px; /* Ukuran font untuk judul */
+  color: white;
+  font-weight: bold;
 }
 
 /* Search bar */
 .navbar-search {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto; /* Membuat search bar berada di tengah */
+  width: 500px; /* Lebar maksimal search bar */
 }
 
 .search-input {
-    width: 400px; /* Lebar search bar */
-    padding: 8px 12px;
-    border: none;
-    border-radius: 5px 0 0 5px;
-    outline: none;
-    font-size: 16px;
+  width: 100%; /* Lebar input agar mengikuti lebar yang ditentukan di navbar-search */
+  padding: 8px 12px;
+  border: none;
+  border-radius: 5px 0 0 5px;
+  outline: none;
+  font-size: 16px;
 }
 
 .search-button {
-    padding: 6.4px 12px;
-    background-color: white;
-    color: black;
-    border: none;
-    border-radius: 0 5px 5px 0;
-    cursor: pointer;
+  padding: 6.4px 12px;
+  background-color: white;
+  color: black;
+  border: none;
+  border-radius: 0 5px 5px 0;
+  cursor: pointer;
 }
 
 .search-button:hover {
-    background-color: #ccc; /* Warna saat hover */
+  background-color: #ccc; /* Warna saat hover */
 }
 
 /* Tombol navigasi */
 .navbar-buttons {
-    display: flex;
-    justify-content: center; /* Mengatur tombol agar berada di tengah */
-    gap: 20px; /* Menjaga jarak antar tombol */
-    padding: 0 50px; /* Menambah jarak di kiri dan kanan tombol */
+  display: flex;
+  gap: 15px; /* Menjaga jarak antar tombol */
+  padding: 0 50px;
+  margin-left: auto; /* Dorong tombol navigasi ke kanan */
 }
 
 .nav-button {
-    padding: 10px 20px;
-    background-color: #252b5c;
-    color: white;
-    border: none; /* Menghapus border default */
-    border-radius: 30px;
-    cursor: pointer;
-    min-width: 100px; /* Memastikan tombol memiliki lebar minimal */
-    text-align: center;
+  padding: 10px 20px;
+  background-color: #0F67B1;
+  color: white;
+  border: none; /* Menghapus border default */
+  border-radius: 30px;
+  cursor: pointer;
+  min-width: 100px; /* Memastikan tombol memiliki lebar minimal */
+  text-align: center;
 }
 
 .nav-button:hover {
-    background-color: #1b2047;
+  background-color: #1b2047;
 }
 
-/* Konten di bawah navbar */
-.content {
-    margin-top: 80px; /* Memberikan ruang agar konten tidak tertutup navbar yang fixed */
-    padding: 20px;
+/* Tombol hamburger */
+.hamburger {
+  display: none; /* Sembunyikan hamburger di desktop */
+  font-size: 30px;
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+/* Responsif - Menampilkan hamburger di layar kecil */
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: row; /* Navbar akan beralih menjadi vertikal pada layar kecil */
+    height: auto; /* Menyesuaikan tinggi navbar */
+    padding: 10px;
+  }
+
+  .navbar-search {
+    width: 100%; /* Membuat search bar lebar penuh */
+    margin: 10px 0;
+    border: none;
+    border-radius: 5px 0 0 5px;
+    padding-left: 10%;
+    padding-right: 10%;
+    align-items: center;
+    display: none; /* Menyembunyikan search bar di layar kecil */
+  }
+
+  .navbar-buttons {
+    flex-direction: column;
+    margin: 0 auto;
+    width: 400px;
+    display: none; /* Menyembunyikan tombol navigasi di layar kecil */
+    padding-right: 5%;
+    padding-left: 5%;
+    border: none;
+  }
+
+  .navbar-buttons.show {
+    display: flex; /* Menampilkan tombol navigasi jika hamburger ditekan */
+    width: 100%;
+  }
+
+  .navbar-search.show {
+    display: flex; /* Menampilkan search bar jika hamburger ditekan */
+  }
+
+  .hamburger {
+    display: flex; /* Menampilkan tombol hamburger pada layar kecil */
+  }
+}
+
+@media (min-width: 769px) {
+  .hamburger {
+    display: none; /* Menyembunyikan tombol hamburger di layar besar */
+  }
 }

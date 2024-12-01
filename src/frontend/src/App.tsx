@@ -1,17 +1,20 @@
-import Sidebar from './components/Sidebar.tsx';
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Navbar from "./components/Navbar";  // Pastikan path ke Navbar benar
+import Sidebar from "./components/Sidebar";  // Import Sidebar
+import AlbumPage from "./pages/AlbumPage";
+import MusicPage from "./pages/MusicPage";
 
-
-function App() {
-
+const App = () => {
   return (
-    <div className="h-screen bg-black">
-      <div className="h-[90%] flex">
+    <Router>
         <Sidebar />
-        </div>
-        
-    </div>
-    
-  )
-}
+        <Navbar />
+          <Routes>
+            <Route path="/album" element={<AlbumPage />} />
+            <Route path="/music" element={<MusicPage />} />
+          </Routes>
+    </Router>
+  );
+};
 
-export default App
+export default App;
