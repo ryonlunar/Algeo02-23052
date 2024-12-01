@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import './MusicPage.css';
 
 const MusicPage: React.FC = () => {
-    const musicFiles = Array.from({ length: 40 }, (_, i) => `audio${i + 1}.wav`); // Contoh data lebih banyak
+    const musicFiles = Array.from({ length: 50 }, (_, i) => `audio${i + 1}.wav`); // Contoh data lebih banyak
     const itemsPerPage = 18; // Menampilkan 12 item per halaman
     const [currentPage, setCurrentPage] = useState(1);
 

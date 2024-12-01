@@ -4,7 +4,7 @@
     color: white;
     display: flex;
     flex-direction: column;
-    padding: 20px;
+    padding: 10px;
     flex: 1;
     margin-left: 300px;  /* Memberikan ruang untuk sidebar */
     margin-top: 60px;    /* Memberikan ruang untuk navbar */
