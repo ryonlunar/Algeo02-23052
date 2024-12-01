@@ -1,0 +1,117 @@
+/* AlbumPage Styling */
+.album-page-main {
+    background-color: #0e3a5e; /* Pastikan latar belakang konsisten */
+    color: white;
+    display: flex;
+    flex-direction: column;
+    padding-left: 20px;
+    padding-right: 18px;
+    flex: 1;
+    margin-left: 300px;  /* Memberikan ruang untuk sidebar */
+    margin-top: 60px;    /* Memberikan ruang untuk navbar */
+    box-sizing: border-box;
+}
+
+/* Album Grid */
+.album-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr); 
+    grid-template-rows: repeat(3, 1fr);
+    gap: 30px;
+    padding: 20px;
+}
+
+/* Album Item */
+.album-item {
+    background-color: #1b4d73; /* Warna latar belakang album item */
+    border-radius: 10px;
+    text-align: center;
+    padding: 10px;
+    transition: transform 0.2s ease-in-out;
+    color: white;
+}
+
+.album-item:hover {
+    transform: scale(1.05); /* Efek hover untuk album */
+}
+
+/* Album Cover (ubah ukuran menjadi 1x1) */
+.album-cover img {
+    width: 148px; /* Menggunakan 100% lebar dari container */
+    height: 148px; /* Memastikan gambar tetap persegi */
+    object-fit: cover; /* Menjaga rasio aspek agar gambar tidak terdistorsi */
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+/* Link ke halaman album */
+.album-link {
+    text-decoration: none;
+    color: white; /* Pastikan teks nama album tetap terlihat */
+}
+
+.album-link:hover {
+    color: #14506e; /* Ganti warna teks saat hover */
+}
+
+/* Play All Button */
+.play-all-button {
+    background-color: #14506e;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.play-all-button:hover {
+    background-color: #0a3a55;
+}
+
+/* Pagination */
+.pagination {
+    text-align: center;
+    margin-top: 20px;
+    background-color: #0e3a5e;
+    padding: 10px 0;
+}
+
+.pagination-button {
+    background-color: #1b4d73;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    margin: 0 5px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.pagination-button:hover {
+    background-color: #14506e;
+}
+
+.pagination-button:disabled {
+    background-color: #666;
+    cursor: not-allowed;
+}
+
+/* Active pagination button */
+.pagination-button.active {
+    background-color: #14506e;
+    font-weight: bold;
+}
+
+/* Responsif: Menyesuaikan grid untuk perangkat kecil */
+@media (max-width: 1024px) {
+    .album-grid {
+        grid-template-columns: repeat(2, 1fr); /* 2 kolom pada layar lebih kecil */
+    }
+}
+
+@media (max-width: 768px) {
+    .album-grid {
+        grid-template-columns: 1fr; /* 1 kolom pada layar lebih kecil */
+    }
+}
