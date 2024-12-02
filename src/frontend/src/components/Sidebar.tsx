@@ -9,7 +9,7 @@ const Sidebar = () => {
     <div className="sidebar">
       <div className="placeholder">Placeholder</div>
       <button className="sidebar-button">Upload</button>
-      {location.pathname === "/album" ? (
+      {location.pathname === "/" ? (
         <button className="sidebar-button">Pictures</button>
       ) : location.pathname === "/music" ? (
         <button className="sidebar-button">Audios</button>

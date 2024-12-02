@@ -29,7 +29,7 @@ const Navbar = () => {
       </div>
 
       <div className={`navbar-buttons ${isMenuOpen ? "show" : ""}`}>
-        <Link to="/album" className="nav-link">
+        <Link to="/" className="nav-link">
           <button className="nav-button">Album</button>
         </Link>
         <Link to="/music" className="nav-link">
