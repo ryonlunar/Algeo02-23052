@@ -1,26 +1,32 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';  // Import Link untuk navigasi
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import axios from 'axios';
 import './AlbumPage.css';
 
 const AlbumPage: React.FC = () => {
-    const albumData = Array.from({ length: 50 }, (_, i) => ({
-        albumName: `Album ${i + 1}`,
-        coverImage: `album-cover-${i + 1}.jpg`,
-        musicFiles: Array.from({ length: 5 }, (_, j) => `audio${i * 5 + j + 1}.wav`), 
-    }));
-    
-    const itemsPerPage = 18; 
+    const [albums, setAlbums] = useState<any[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 18;
+
+    useEffect(() => {
+        // Fetch albums from the backend API
+        axios.get('http://localhost:8000/albums')
+            .then(response => {
+                setAlbums(response.data);
+            })
+            .catch(error => {
+                console.error("There was an error fetching the albums!", error);
+            });
+    }, []);
 
     // Hitung album yang akan ditampilkan berdasarkan halaman aktif
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    const currentAlbums = albumData.slice(startIndex, endIndex);
+    const currentAlbums = albums.slice(startIndex, endIndex);
 
     // Hitung jumlah halaman
-    const totalPages = Math.ceil(albumData.length / itemsPerPage);
+    const totalPages = Math.ceil(albums.length / itemsPerPage);
 
-    // Fungsi untuk mengubah halaman
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
     };
@@ -32,11 +38,12 @@ const AlbumPage: React.FC = () => {
                 {currentAlbums.map((album, index) => (
                     <div key={index} className="album-item">
                         <div className="album-cover">
-                            <img src={album.coverImage} alt={album.albumName} />
+                            {/* Pastikan URL gambar valid */}
+                            <img src={`http://localhost:8000/album_images/${album.name}`} alt={album.name} />
                         </div>
                         {/* Link ke halaman album untuk melihat musik terkait */}
-                        <Link to={`/album/${album.albumName}`} className="album-link">
-                            <h3>{album.albumName}</h3>
+                        <Link to={`/album/${album.name}`} className="album-link">
+                            <h3>{album.name}</h3>
                         </Link>
                     </div>
                 ))}

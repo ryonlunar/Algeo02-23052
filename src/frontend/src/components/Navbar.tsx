@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom"; // Import Link untuk routing
 import "./Navbar.css";  
 import logo from "../assets/logo.png"; 
