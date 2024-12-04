@@ -1,10 +1,7 @@
-import React from "react";
-import { useLocation } from "react-router-dom";
 import "./Sidebar.css";
 
 const Sidebar = () => {
-  const location = useLocation(); // Mendapatkan lokasi path saat ini
-
+  
   return (
     <div className="sidebar">
       <div className="placeholder">Placeholder</div>
