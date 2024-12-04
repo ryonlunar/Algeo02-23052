@@ -2,6 +2,7 @@ import os
 import cv2
 import numpy as np
 from scipy.spatial.distance import euclidean
+from sklearn.decomposition import PCA
 
 # Konversi gambar menjadi grayscale
 def convert_grayscale(image_path):
@@ -36,29 +37,32 @@ def center_data(arr_images):
     arr_images_standardized = arr_images - mean_images
     return arr_images_standardized, mean_images
 
-# Perhitungan SVD
-def calculate_SVD(data, n):
-    U, S, Ut = np.linalg.svd(data, full_matrices=False)
-    
-    evec_component = Ut[:n] # Ambil n jumlah komponen utama teratas
-    eval_component = S[:n] # Ambil n jumlah varian komponen utama teratas
-    
-    data_projection = np.dot(data, evec_component.T)
-    
-    return evec_component, eval_component, data_projection
+# Perhitungan PCA
+def calculate_PCA(standardized_images, n):
+    pca = PCA(n_components=n)
+    pca.fit(standardized_images)
+    return pca
 
-def compute_similarity(query, dataset, Uk):
-    query_projection = np.dot(query, Uk)
-    dataset_projection = np.dot(dataset, Uk)
-    
-    # Cari jarak euclidean untuk tiap gambar
-    distances = []
-    for projection in dataset_projection:
-        dist = euclidean(query_projection, projection)
-        distances.append(dist)
-    
-    # Urutkan jarak euclidean
+def process_query(query_path, mean, pca, size):
+    query_grayscale = convert_grayscale(query_path)
+    query_resized = convert_size(query_grayscale, size)
+    query_flattened = flatten(query_resized)
+    query_std = query_flattened - mean
+    query_projected = pca.transform([query_std])
+    return query_projected[0]
+
+def compute_similarity(query, dataset):
+    distances = [euclidean(query, image) for image in dataset]
     sorted_distances = np.argsort(distances)
-    
-    return sorted_distances
+    return sorted_distances, distances
 
+def image_retrieval(image_folder, query_path, n_components):
+    base_array = image_processing(image_folder, (300, 300))
+    standardized_images, mean_images = center_data(base_array)
+    
+    pca = calculate_PCA(standardized_images, n_components)
+    projected_images = pca.transform(standardized_images)
+    
+    query_image = process_query(query_path, mean_images, pca, size=(300, 300))
+    sorted_distances, distances = compute_similarity(query_image, projected_images)
+    return sorted_distances, distances
