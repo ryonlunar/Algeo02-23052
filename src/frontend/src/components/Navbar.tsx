@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom"; // Import Link untuk routing
 import "./Navbar.css";  
 import logo from "../assets/logo.png"; 
@@ -29,7 +29,7 @@ const Navbar = () => {
       </div>
 
       <div className={`navbar-buttons ${isMenuOpen ? "show" : ""}`}>
-        <Link to="/album" className="nav-link">
+        <Link to="/" className="nav-link">
           <button className="nav-button">Album</button>
         </Link>
         <Link to="/music" className="nav-link">
