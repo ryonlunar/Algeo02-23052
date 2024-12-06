@@ -9,9 +9,7 @@ const Sidebar = () => {
   const toggleUploadOptions = () => {
     setShowUploadOptions(!showUploadOptions);
   };
-import "./Sidebar.css";
 
-const Sidebar = () => {
   return (
     <div className="sidebar">
       <div className="placeholder">Placeholder</div>
