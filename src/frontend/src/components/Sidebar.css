@@ -18,22 +18,24 @@
 .placeholder {
   width: 240px;
   height: 150px;
-  background-color: #D3D3D3; /* Warna abu-abu terang */
+  background-color: #002D57;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 20px; /* Jarak ke tombol */
   border-radius: 8px; /* Sudut melengkung */
-  font-size: 16px;
-  color: black;
+  font-size: 20px;
+  color: white;
+  border: 2px dashed #4a90e2; 
 }
+
 
 /* Tombol sidebar */
 .sidebar-button {
   width: 150px;
   padding: 10px;
   margin-bottom: 10px;
-  background-color: #004B8D; /* Warna biru */
+  background-color: #007ACC; /* Warna biru */
   color: white;
   border: none;
   border-radius: 5px; /* Sudut melengkung */
@@ -50,4 +52,73 @@
   display: flex;
   flex-direction: column;
   padding-bottom: 20px;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.modal-content {
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  width: 400px;
+}
+
+.upload-area {
+  border: 2px dashed #004B8D;
+  border-radius: 8px;
+  padding: 32px;
+  margin-bottom: 20px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.modal-actions button {
+  padding: 10px 20px;
+  background-color: #004B8D;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.modal-actions button:hover {
+  background-color: #007ACC;
+}
+
+.disabled-button {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.upload-area.dragging {
+  border-color: #4a90e2;
+  background-color: rgba(74, 144, 226, 0.1);
+}
+
+.file-input-label {
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-progress {
+  margin-top: 10px;
+  color: #4a90e2;
 }
