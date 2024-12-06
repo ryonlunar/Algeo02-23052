@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, HTTPException, UploadFile, File, Depends
+from fastapi import FastAPI, UploadFile, File, Depends
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
@@ -17,9 +17,16 @@ class AlbumImage(Base):
     name = Column(String, nullable=False)
     path = Column(String, nullable=False)
 
-# Setup Database URL and create engine
-DATABASE_URL = 'sqlite:///album_images.db'
-engine = create_engine(DATABASE_URL, echo=True)
+# Get the current directory (where main.py is located)
+BASE_DIR = os.path.dirname(__file__)
+
+# Set the relative path to store uploaded images (within app folder)
+UPLOAD_DIR = os.path.join(BASE_DIR, 'album_images')  # Path relatif untuk folder gambar
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+# Setup Database URL and create engine (store DB in the same app folder)
+DATABASE_URL = os.path.join(BASE_DIR, 'album_images.db')  # Path relatif untuk database
+engine = create_engine(f'sqlite:///{DATABASE_URL}', echo=True)
 Base.metadata.create_all(engine)
 
 # Create a session factory
@@ -36,10 +43,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Path to store uploaded images
-UPLOAD_DIR = 'D:/TUBES 2 ALGEO/Algeo02-23052/src/backend/app/album_images'  # Path Absolute
-os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # Mount static directory to serve images
 app.mount("/album_images", StaticFiles(directory=UPLOAD_DIR), name="album_images")
