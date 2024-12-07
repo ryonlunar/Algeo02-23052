@@ -120,7 +120,7 @@ async def retrieve_images(file: UploadFile = File(...)):
             similar_images, similarity_scores = find_similar_images(
                 query_features, 
                 IMAGE_FOLDER,
-                n=10
+                n=len(IMAGE_FOLDER)
             )
             
             print(f"Found {len(similar_images)} similar images")
