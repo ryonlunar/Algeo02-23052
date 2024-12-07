@@ -53,7 +53,7 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, title }) => 
             ref={fileInputRef}
             onChange={handleFileSelect}
             style={{ display: "none" }}
-            accept={title === "Image" ? "image/" : "audio/"}
+            accept={title === "Image" ? "image/*" : "audio/*"}
           />
         </div>
         <div className="modal-actions">
@@ -70,7 +70,7 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, title }) => 
 // Komponen PictureModal (Untuk logika retrieval gambar)
 interface PictureModalProps {
   isOpen: boolean;
-  onClose: (submitted: boolean, file?: File, similarImages?: string[]) => void;
+  onClose: (submitted: boolean, file?: File, similarImages?: string[], similarityScores?: number[]) => void;
 }
 
 const PictureModal: React.FC<PictureModalProps> = ({ isOpen, onClose }) => {
@@ -85,19 +85,23 @@ const PictureModal: React.FC<PictureModalProps> = ({ isOpen, onClose }) => {
 
   const handleSubmitRetrieval = async () => {
     if (!file) return;
-
+  
     const formData = new FormData();
     formData.append("file", file);
-
+  
     try {
+      const startTime = performance.now(); // Tambahkan waktu mulai
       const response = await fetch("http://localhost:8000/api/retrieve", {
         method: "POST",
         body: formData,
       });
-
+      const endTime = performance.now(); // Tambahkan waktu akhir
+  
       if (response.ok) {
         const data = await response.json();
-        onClose(true, file, data.similar_images);
+        const executionTime = data.execution_time || endTime - startTime; // Gunakan nilai dari server atau hitung manual
+  
+        onClose(true, file, data.similar_images, data.similarity_scores, executionTime); // Kirim executionTime
       } else {
         console.error("Retrieval failed");
         onClose(false);
@@ -107,6 +111,7 @@ const PictureModal: React.FC<PictureModalProps> = ({ isOpen, onClose }) => {
       onClose(false);
     }
   };
+  
 
   if (!isOpen) return null;
 
@@ -161,6 +166,7 @@ const Sidebar: React.FC = () => {
 
   const [queryImage, setQueryImage] = useState<File | null>(null);
   const [similarImages, setSimilarImages] = useState<string[]>([]);
+  const [similarityScores, setSimilarityScores] = useState<number[]>([]);
 
   const handleSavePendingUpload = (type: "image" | "audio" | "mapper", fileName: string, file: File) => {
     setUploadedFiles((prev) => ({
@@ -176,20 +182,26 @@ const Sidebar: React.FC = () => {
   const handlePictureRetrieval = (
     submitted: boolean,
     file?: File,
-    similarImages?: string[]
+    similarImages?: string[],
+    similarityScores?: number[],
+    executionTime?: number // Tambahkan ini
   ) => {
     if (submitted && file) {
       setQueryImage(file);
       setSimilarImages(similarImages || []);
+      setSimilarityScores(similarityScores || []);
       navigate("/retrieval", {
         state: {
           queryImage: file,
           similarImages: similarImages || [],
+          similarityScores: similarityScores || [],
+          executionTime,
         },
       });
     }
     setShowPictureModal(false);
   };
+  
 
   const handleSubmitAll = async () => {
     if (!selectedFiles.image && !selectedFiles.audio && !selectedFiles.mapper) {
@@ -199,7 +211,6 @@ const Sidebar: React.FC = () => {
 
     const formData = new FormData();
 
-    // Append actual File objects to FormData
     if (selectedFiles.image) {
       formData.append("images", selectedFiles.image);
     }
@@ -220,7 +231,6 @@ const Sidebar: React.FC = () => {
         console.log("All files submitted successfully!");
         alert("Files uploaded successfully!");
 
-        // Reset states after successful submission
         setUploadedFiles({
           image: "",
           audio: "",
@@ -232,7 +242,6 @@ const Sidebar: React.FC = () => {
           mapper: null,
         });
 
-        // Clear file inputs
         const inputs = document.querySelectorAll<HTMLInputElement>('input[type="file"]');
         inputs.forEach((input) => {
           input.value = "";
