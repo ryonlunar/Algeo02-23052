@@ -1,12 +1,15 @@
 import os
-from fastapi import FastAPI, UploadFile, File, Depends
+import uuid
+import shutil
+from fastapi import FastAPI, UploadFile, File, Depends, HTTPException
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
-import shutil
-from fastapi.middleware.cors import CORSMiddleware
+from .routes.image import router as image_router  # Updated import
 
+# Database ORM setup
 Base = declarative_base()
 
 class AlbumImage(Base):
@@ -21,21 +24,35 @@ class MusicAudio(Base):
     name = Column(String, nullable=False)
     path = Column(String, nullable=False)
 
+# Directory paths
 BASE_DIR = os.path.dirname(__file__)
 UPLOAD_DIR = os.path.join(BASE_DIR, 'album_images')
 AUDIO_DIR = os.path.join(BASE_DIR, 'music_audios')
+TEMP_DIR = os.path.join(BASE_DIR, 'temp')
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(AUDIO_DIR, exist_ok=True)
+os.makedirs(TEMP_DIR, exist_ok=True)
 
+# Database setup
 DATABASE_URL = os.path.join(BASE_DIR, 'album_images.db')
 engine = create_engine(f'sqlite:///{DATABASE_URL}', echo=True)
 Base.metadata.create_all(engine)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+# FastAPI app setup
 app = FastAPI()
 
+# Database dependency
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+# Middleware for CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -44,47 +61,119 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount static directories
 app.mount("/album_images", StaticFiles(directory=UPLOAD_DIR), name="album_images")
 app.mount("/music_audios", StaticFiles(directory=AUDIO_DIR), name="music_audios")
+app.mount("/temp", StaticFiles(directory=TEMP_DIR), name="temp")
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+# Include image routes
+app.include_router(image_router)
 
+# Routes for file upload
 @app.post("/upload-image")
 async def upload_image(file: UploadFile = File(...), db: Session = Depends(get_db)):
-    file_path = os.path.join(UPLOAD_DIR, file.filename)
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-    
-    new_image = AlbumImage(name=file.filename, path=file_path)
-    db.add(new_image)
-    db.commit()
-    db.refresh(new_image)
-    
-    return {"message": "Image uploaded successfully", "file_path": file_path}
+    unique_filename = f"{uuid.uuid4()}_{file.filename}"
+    file_path = os.path.join(UPLOAD_DIR, unique_filename)
+
+    try:
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        new_image = AlbumImage(name=unique_filename, path=file_path)
+        db.add(new_image)
+        db.commit()
+        db.refresh(new_image)
+
+        return {"message": "Image uploaded successfully", "file_path": file_path}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error uploading image: {str(e)}")
 
 @app.post("/upload-audio")
 async def upload_audio(file: UploadFile = File(...), db: Session = Depends(get_db)):
-    file_path = os.path.join(AUDIO_DIR, file.filename)
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-    
-    new_audio = MusicAudio(name=file.filename, path=file_path)
-    db.add(new_audio)
-    db.commit()
-    db.refresh(new_audio)
-    
-    return {"message": "Audio uploaded successfully", "file_path": file_path}
+    unique_filename = f"{uuid.uuid4()}_{file.filename}"
+    file_path = os.path.join(AUDIO_DIR, unique_filename)
 
+    try:
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        new_audio = MusicAudio(name=unique_filename, path=file_path)
+        db.add(new_audio)
+        db.commit()
+        db.refresh(new_audio)
+
+        return {"message": "Audio uploaded successfully", "file_path": file_path}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error uploading audio: {str(e)}")
+
+@app.post("/submit-all")
+async def submit_all(
+    images: list[UploadFile] = File(default=[]),
+    audios: list[UploadFile] = File(default=[]),
+    db: Session = Depends(get_db)
+):
+    responses = []
+    
+    try:
+        # Process images
+        if images:
+            for image in images:
+                if not image.content_type.startswith('image/'):
+                    raise HTTPException(400, detail=f"File {image.filename} must be an image")
+                
+                unique_filename = f"{uuid.uuid4()}_{image.filename}"
+                file_path = os.path.join(UPLOAD_DIR, unique_filename)
+                
+                with open(file_path, "wb") as buffer:
+                    shutil.copyfileobj(image.file, buffer)
+                
+                new_image = AlbumImage(name=unique_filename, path=file_path)
+                db.add(new_image)
+                responses.append({
+                    "file": unique_filename,
+                    "type": "image",
+                    "path": file_path
+                })
+
+        # Process audios
+        if audios:
+            for audio in audios:
+                if not audio.content_type.startswith('audio/'):
+                    raise HTTPException(400, detail=f"File {audio.filename} must be an audio file")
+                
+                unique_filename = f"{uuid.uuid4()}_{audio.filename}"
+                file_path = os.path.join(AUDIO_DIR, unique_filename)
+                
+                with open(file_path, "wb") as buffer:
+                    shutil.copyfileobj(audio.file, buffer)
+                
+                new_audio = MusicAudio(name=unique_filename, path=file_path)
+                db.add(new_audio)
+                responses.append({
+                    "file": unique_filename,
+                    "type": "audio",
+                    "path": file_path
+                })
+
+        # Commit all changes to database
+        db.commit()
+        
+        return {
+            "message": "All files submitted successfully",
+            "files": responses
+        }
+    except Exception as e:
+        # Rollback on error
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Retrieve all albums
 @app.get("/albums")
 async def get_albums(db: Session = Depends(get_db)):
     albums = db.query(AlbumImage).all()
     return [{"id": album.id, "name": album.name, "path": album.path} for album in albums]
 
+# Retrieve all audios
 @app.get("/audios")
 async def get_audios(db: Session = Depends(get_db)):
     audios = db.query(MusicAudio).all()
@@ -93,29 +182,3 @@ async def get_audios(db: Session = Depends(get_db)):
 @app.get("/")
 async def read_root():
     return {"message": "Welcome to the Music Album API!"}
-
-@app.on_event("startup")
-async def populate_database():
-    db = SessionLocal()
-    try:
-        # Populate images
-        existing_images = db.query(AlbumImage).all()
-        if not existing_images:
-            for image_file in os.listdir(UPLOAD_DIR):
-                if image_file.endswith(('.jpg', '.jpeg', '.png')):
-                    image_path = os.path.join(UPLOAD_DIR, image_file)
-                    new_image = AlbumImage(name=image_file, path=image_path)
-                    db.add(new_image)
-        
-        # Populate audio files
-        existing_audios = db.query(MusicAudio).all()
-        if not existing_audios:
-            for audio_file in os.listdir(AUDIO_DIR):
-                if audio_file.endswith(('.mp3', '.wav')):
-                    audio_path = os.path.join(AUDIO_DIR, audio_file)
-                    new_audio = MusicAudio(name=audio_file, path=audio_path)
-                    db.add(new_audio)
-        
-        db.commit()
-    finally:
-        db.close()
