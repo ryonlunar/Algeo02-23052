@@ -1,0 +1,89 @@
+/* RetrievalPage.css */
+.retrieval-page-main {
+    background-color: #001830;
+    margin-left: 300px;
+    margin-top: 60px;
+    min-height: calc(100vh - 60px);
+    width: 1236px;
+    padding: 20px;
+    box-sizing: border-box;
+    color: white;
+}
+
+.query-section {
+    margin-bottom: 30px;
+}
+
+.query-section h2,
+.results-section h2 {
+    color: white;
+    margin-bottom: 15px;
+    padding-left: 15px;
+}
+
+.query-image {
+    max-width: 240px;
+    max-height: 150px;
+    margin: 0 auto;
+    background-color: #002b4d;
+    border-radius: 5px;
+}
+
+.query-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.results-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 15px;
+    padding: 15px;
+}
+
+.result-item {
+    width: 150px;
+    height: 165px;
+    background-color: #002b4d;
+    padding: 10px;
+    border-radius: 5px;
+    transition: transform 0.2s ease-in-out;
+}
+
+.result-item:hover {
+    transform: scale(1.05);
+}
+
+.result-cover {
+    width: 140px;
+    height: 140px;
+    margin: 0 auto;
+}
+
+.result-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.result-info {
+    margin-top: 10px;
+    text-align: center;
+}
+
+.result-name {
+    display: block;
+    font-size: 12px;
+    color: white;
+    margin-bottom: 5px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.similarity-score {
+    display: block;
+    font-size: 11px;
+    color: #8bb4fe;
+}

@@ -17,7 +17,7 @@
 /* Placeholder box */
 .placeholder {
   width: 240px;
-  height: 150px;
+  height: 170px;
   background-color: #002D57;
   display: flex;
   align-items: center;
@@ -52,23 +52,6 @@
   display: flex;
   flex-direction: column;
   padding-bottom: 20px;
-}
-
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2;
-}
-
-.modal-content {
-  background: white;
-  padding: 24px;
-  border-radius: 8px;
-  width: 400px;
 }
 
 .upload-area {
@@ -121,4 +104,59 @@
 .upload-progress {
   margin-top: 10px;
   color: #4a90e2;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: #001830;
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  color: white;
+}
+
+.modal-title {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.upload-area {
+  border: 2px dashed #336699;
+  border-radius: 4px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 15px;
+}
+
+.modal-actions button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: #002b4d;
+  color: white;
+}
+
+.modal-actions button:hover {
+  background-color: #003666;
 }
