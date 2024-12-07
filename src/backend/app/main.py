@@ -1,13 +1,14 @@
 import os
 import uuid
 import shutil
+import time
 from fastapi import FastAPI, UploadFile, File, Depends, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
-from .routes.image import router as image_router  # Updated import
+from .routes.image import router as image_router
 
 # Database ORM setup
 Base = declarative_base()
@@ -30,6 +31,7 @@ UPLOAD_DIR = os.path.join(BASE_DIR, 'album_images')
 AUDIO_DIR = os.path.join(BASE_DIR, 'music_audios')
 TEMP_DIR = os.path.join(BASE_DIR, 'temp')
 
+# Ensure directories exist
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(AUDIO_DIR, exist_ok=True)
 os.makedirs(TEMP_DIR, exist_ok=True)
@@ -42,7 +44,7 @@ Base.metadata.create_all(engine)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # FastAPI app setup
-app = FastAPI()
+app = FastAPI(title="Music Album API")
 
 # Database dependency
 def get_db():
@@ -66,10 +68,9 @@ app.mount("/album_images", StaticFiles(directory=UPLOAD_DIR), name="album_images
 app.mount("/music_audios", StaticFiles(directory=AUDIO_DIR), name="music_audios")
 app.mount("/temp", StaticFiles(directory=TEMP_DIR), name="temp")
 
-# Include image routes
-app.include_router(image_router)
+# Include image routes for retrieval functionality
+app.include_router(image_router, prefix="/api")
 
-# Routes for file upload
 @app.post("/upload-image")
 async def upload_image(file: UploadFile = File(...), db: Session = Depends(get_db)):
     unique_filename = f"{uuid.uuid4()}_{file.filename}"
@@ -182,3 +183,7 @@ async def get_audios(db: Session = Depends(get_db)):
 @app.get("/")
 async def read_root():
     return {"message": "Welcome to the Music Album API!"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -91,7 +91,7 @@ const PictureModal: React.FC<PictureModalProps> = ({ isOpen, onClose }) => {
   
     try {
       const startTime = performance.now(); // Tambahkan waktu mulai
-      const response = await fetch("http://localhost:8000/api/retrieve", {
+      const response = await fetch("http://localhost:8000/api/image-search", {
         method: "POST",
         body: formData,
       });

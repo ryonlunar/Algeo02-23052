@@ -28,29 +28,37 @@ const RetrievalPage: React.FC = () => {
 
   const { queryImage, similarImages, similarityScores, executionTime } = state;
 
-  // Filter dan urutkan hasil dengan similarity >= 50%
+  // Filter dan urutkan hasil, tambahkan fallback jika tidak ada similarity >= 70%
   const filteredAndSortedResults: ImageResult[] = useMemo(() => {
-    const results = similarImages
+    const allResults = similarImages
       .map((filename, index) => ({
         filename,
         similarity: similarityScores[index] * 100, // Ubah ke persentase
       }))
-      .filter((result) => result.similarity >= 50)
       .sort((a, b) => b.similarity - a.similarity);
 
-    const maxPages = Math.ceil(results.length / ITEMS_PER_PAGE);
+    // Filter hanya similarity >= 70%
+    const filteredResults = allResults.filter((result) => result.similarity >= 70);
+
+    // Jika tidak ada hasil di atas 70%, tambahkan 1 hasil terbaik
+    if (filteredResults.length === 0 && allResults.length > 0) {
+      filteredResults.push(allResults[0]); // Tambahkan hasil terbaik meskipun < 70%
+    }
+
+    // Reset halaman jika currentPage melebihi jumlah halaman
+    const maxPages = Math.ceil(filteredResults.length / ITEMS_PER_PAGE);
     if (currentPage > maxPages && maxPages > 0) {
       setCurrentPage(1);
     }
 
-    return results;
-  }, [similarImages, similarityScores]);
+    return filteredResults;
+  }, [similarImages, similarityScores, currentPage]);
 
   if (filteredAndSortedResults.length === 0) {
     return (
       <div className="retrieval-page-main">
         <div className="results-section">
-          <h2>No images found with similarity above 50%</h2>
+          <h2>No similar images found</h2>
           {executionTime && (
             <p className="execution-time">
               Execution time: {executionTime.toFixed(2)} ms
@@ -104,7 +112,9 @@ const RetrievalPage: React.FC = () => {
     <div className="retrieval-page-main">
       <div className="results-section">
         <h2>
-          Similar Images ({filteredAndSortedResults.length} results above 50% similarity)
+          {filteredAndSortedResults.some((result) => result.similarity >= 70)
+            ? `Similar Images (${filteredAndSortedResults.length} results above 70% similarity)`
+            : `Showing the most similar image (no results above 70% similarity)`}
           {totalPages > 1 && ` - Page ${currentPage} of ${totalPages}`}
         </h2>
         {executionTime && (
