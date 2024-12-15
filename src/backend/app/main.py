@@ -8,8 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
-from .routes.image import router as image_router
-from .routes.audio_routes import router as audio_router
+from routes.image import router as image_router
+from routes.audio_routes import router as audio_router
 
 # Database ORM setup
 Base = declarative_base()
@@ -38,7 +38,7 @@ os.makedirs(AUDIO_DIR, exist_ok=True)
 os.makedirs(TEMP_DIR, exist_ok=True)
 
 # Database setup
-DATABASE_URL = os.path.join(BASE_DIR, 'album_images.db')
+DATABASE_URL = os.path.join(BASE_DIR, 'database.db')
 engine = create_engine(f'sqlite:///{DATABASE_URL}', echo=True)
 Base.metadata.create_all(engine)
 
