@@ -89,7 +89,7 @@ def cosine_similarity(v1: np.ndarray, v2: np.ndarray) -> float:
         return 0
     return np.dot(v1, v2) / (magnitude1 * magnitude2)
 
-def audio_retrieval_main(query_path: str, audio_folder: str, n: int = 30) -> Tuple[List[str], List[float]]:
+def audio_retrieval_main(query_path: str, audio_folder: str, n: int = 50) -> Tuple[List[str], List[float]]:
     try:
         print(f"Extracting query melody from {query_path}")
         query_notes = extract_melody(query_path)

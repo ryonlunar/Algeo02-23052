@@ -79,15 +79,36 @@ interface PictureModalProps {
 const PictureModal: React.FC<PictureModalProps> = ({ isOpen, onClose }) => {
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false); // Add isProcessing state
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      setFile(e.target.files[0]);
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
+
+    setErrorMessage(null);
+
+    const validExtensions = [".jpg", ".jpeg", ".png"];
+    const fileExtension = selectedFile.name.toLowerCase().slice(-4); // Get the last 4 characters of the file name
+
+    const validMIMEType =
+      selectedFile.type === "image/jpeg" ||
+      selectedFile.type === "image/png" ||
+      selectedFile.type === "image/jpg";
+
+    if (!validMIMEType && !validExtensions.includes(fileExtension)) {
+      setErrorMessage("Please select a valid image file (.jpg, .jpeg, or .png).");
+      setFile(null);
+      return;
     }
+
+    setFile(selectedFile);
   };
 
   const handleSubmitRetrieval = async () => {
     if (!file) return;
+
+    setIsProcessing(true); // Set isProcessing to true when the process starts
 
     const formData = new FormData();
     formData.append("file", file);
@@ -111,6 +132,8 @@ const PictureModal: React.FC<PictureModalProps> = ({ isOpen, onClose }) => {
     } catch (error) {
       console.error("Error retrieving images:", error);
       onClose(false);
+    } finally {
+      setIsProcessing(false); // Set isProcessing to false when the process is done
     }
   };
 
@@ -122,18 +145,19 @@ const PictureModal: React.FC<PictureModalProps> = ({ isOpen, onClose }) => {
         <h2 className="modal-title">Upload Picture for Retrieval</h2>
         <div className="upload-area" onClick={() => fileInputRef.current?.click()}>
           {file ? <p>File Selected: {file.name}</p> : <p>Select file or Drag and drop here</p>}
+          {errorMessage && <p className="error-message">{errorMessage}</p>}
           <input
             type="file"
             ref={fileInputRef}
             onChange={handleFileSelect}
             style={{ display: "none" }}
-            accept="image/*"
+            accept="image/jpeg, image/png, image/jpg"
           />
         </div>
         <div className="modal-actions">
           <button onClick={() => onClose(false)}>Cancel</button>
-          <button onClick={handleSubmitRetrieval} disabled={!file}>
-            Find
+          <button onClick={handleSubmitRetrieval} disabled={!file || isProcessing}>
+            {isProcessing ? "Processing..." : "Find"}
           </button>
         </div>
       </div>
@@ -149,13 +173,34 @@ interface AudioModalProps {
 const AudioModal: React.FC<AudioModalProps> = ({ isOpen, onClose }) => {
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const controller = useRef<AbortController | null>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      setFile(e.target.files[0]);
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
+
+    setErrorMessage(null);
+
+    const validMIMEType = selectedFile.type === "audio/midi" || selectedFile.type === "audio/x-midi";
+    const validExtensions = [".midi", ".mid"];
+    const fileExtension = selectedFile.name.toLowerCase().slice(-4); // Get last 4 characters to check file extension
+
+    if (!validMIMEType && !validExtensions.includes(fileExtension)) {
+      setErrorMessage("Please select a valid MIDI audio file.");
+      setFile(null);
+      return;
     }
+
+    const maxSizeInMB = 10;
+    if (selectedFile.size > maxSizeInMB * 1024 * 1024) {
+      setErrorMessage(`File size must be less than ${maxSizeInMB}MB.`);
+      setFile(null);
+      return;
+    }
+
+    setFile(selectedFile);
   };
 
   const handleSubmitAudio = async () => {
@@ -211,7 +256,12 @@ const AudioModal: React.FC<AudioModalProps> = ({ isOpen, onClose }) => {
       <div className="modal-content">
         <h2 className="modal-title">Upload Audio for Search</h2>
         <div className="upload-area" onClick={() => fileInputRef.current?.click()}>
-          {file ? <p>File Selected: {file.name}</p> : <p>Select file or Drag and drop here</p>}
+          {file ? (
+            <p>File Selected: {file.name}</p>
+          ) : (
+            <p>Select file or Drag and drop here</p>
+          )}
+          {errorMessage && <p className="error-message">{errorMessage}</p>}
           <input
             type="file"
             ref={fileInputRef}
@@ -223,7 +273,7 @@ const AudioModal: React.FC<AudioModalProps> = ({ isOpen, onClose }) => {
         <div className="modal-actions">
           <button onClick={handleCancel}>Cancel</button>
           <button onClick={handleSubmitAudio} disabled={!file || isProcessing}>
-            {isProcessing ? 'Processing...' : 'Find'}
+            {isProcessing ? "Processing..." : "Find"}
           </button>
         </div>
       </div>
@@ -272,7 +322,7 @@ const MicrophoneModal: React.FC<MicModalProps> = ({ isOpen, onClose }) => {
             setError("Error during audio processing.");
             setIsProcessing(false);
           }
-        }, 25000);
+        }, 30000);
       } else {
         console.error("Failed to start recording");
         setError("Failed to start recording");
@@ -327,10 +377,12 @@ const MicrophoneModal: React.FC<MicModalProps> = ({ isOpen, onClose }) => {
         <h2 className="modal-title">Record Audio for Search</h2>
         <div className="modal-actions">
           <button onClick={handleCancel}>Cancel</button>
-          {!isRecording ? (
+          {!isRecording && !isProcessing ? (
             <button onClick={handleStartRecording}>Start Recording</button>
-          ) : (
+          ) : isRecording ? (
             <button disabled>Recording...</button>
+          ) : (
+            <button disabled>Processing...</button>
           )}
         </div>
         {isProcessing && (
@@ -347,6 +399,7 @@ const MicrophoneModal: React.FC<MicModalProps> = ({ isOpen, onClose }) => {
     </div>
   );
 };
+
 
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
