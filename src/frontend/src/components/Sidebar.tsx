@@ -265,7 +265,7 @@ const MicrophoneModal: React.FC<MicModalProps> = ({ isOpen, onClose }) => {
             setError("Error during audio processing.");
             setIsProcessing(false);
           }
-        }, 25000); // Wait for 25 seconds for the recording to complete
+        }, 30000); // Wait for 25 seconds for the recording to complete
       } else {
         console.error("Failed to start recording");
         setError("Failed to start recording");
