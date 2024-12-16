@@ -8,17 +8,13 @@ from tempfile import NamedTemporaryFile
 import time
 import traceback
 
-# Create router instance
 router = APIRouter(tags=["image-retrieval"])
 
-# Get the base directory path dynamically
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 IMAGE_FOLDER = os.path.join(BASE_DIR, "album_images")
 
-# Ensure the image folder exists
 os.makedirs(IMAGE_FOLDER, exist_ok=True)
 
-# Debug information about directories
 print(f"Current working directory: {os.getcwd()}")
 print(f"BASE_DIR: {BASE_DIR}")
 print(f"IMAGE_FOLDER: {IMAGE_FOLDER}")
@@ -196,7 +192,7 @@ async def search_similar_images(file: UploadFile = File(...)):
         print("Creating temporary file...")
         temp = NamedTemporaryFile(delete=False)
         temp_path = temp.name
-        temp.close()  # Close the file immediately
+        temp.close()
         
         with open(temp_path, 'wb') as f:
             shutil.copyfileobj(file.file, f)
@@ -237,8 +233,8 @@ async def search_similar_images(file: UploadFile = File(...)):
         print("Cleaning up temporary file...")
         try:
             if temp is not None:
-                file.file.close()  # Close the uploaded file
+                file.file.close() 
                 if os.path.exists(temp.name):
-                    os.unlink(temp.name)  # Use os.unlink instead of os.remove
+                    os.unlink(temp.name)  
         except Exception as cleanup_error:
             print(f"Warning: Error during cleanup: {cleanup_error}")

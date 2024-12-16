@@ -5,7 +5,6 @@ import numpy as np
 from typing import List, Tuple
 
 def extract_melody(midi_path: str) -> List[Tuple[int, int]]:
-    """Extract melody notes from MIDI file."""
     try:
         midi = MidiFile(midi_path)
         notes = []
@@ -21,7 +20,6 @@ def extract_melody(midi_path: str) -> List[Tuple[int, int]]:
                     msg.channel == 0):
                     notes.append((current_time, msg.note))
                     
-                    # Limit the number of notes to prevent excessive processing
                     if len(notes) >= 1000:
                         return notes
         
@@ -31,7 +29,6 @@ def extract_melody(midi_path: str) -> List[Tuple[int, int]]:
         return []
     
 def normalize_melody(notes: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
-    """Normalize pitch in melody using z-score normalization."""
     pitches = [note[1] for note in notes]
     
     mean = np.mean(pitches)
@@ -45,7 +42,6 @@ def normalize_melody(notes: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
     return normalized_notes 
 
 def windowing(normalized_notes: List[Tuple[int, int]], window_size: int = 40, window_slide: int = 8) -> List[List[Tuple[int, int]]]:
-    """Apply sliding window technique to the melody."""
     windows = []
     
     # Ensure the number of notes is sufficient for windowing
@@ -61,7 +57,6 @@ def windowing(normalized_notes: List[Tuple[int, int]], window_size: int = 40, wi
     return windows
 
 def create_feature_vector(notes: List[Tuple[int, int]]) -> np.ndarray:
-    """Create feature vector from notes using pitch histograms."""
     pitches = [note[1] for note in notes]
     
     if not pitches:
@@ -85,11 +80,9 @@ def create_feature_vector(notes: List[Tuple[int, int]]) -> np.ndarray:
     else:
         ftb_hist = np.zeros(255)
     
-    # Combine features
     return np.concatenate([atb_hist, rtb_hist, ftb_hist])
 
 def cosine_similarity(v1: np.ndarray, v2: np.ndarray) -> float:
-    """Calculate cosine similarity between two vectors."""
     magnitude1 = np.linalg.norm(v1)
     magnitude2 = np.linalg.norm(v2)
     if magnitude1 == 0 or magnitude2 == 0:
@@ -97,7 +90,6 @@ def cosine_similarity(v1: np.ndarray, v2: np.ndarray) -> float:
     return np.dot(v1, v2) / (magnitude1 * magnitude2)
 
 def audio_retrieval_main(query_path: str, audio_folder: str, n: int = 30) -> Tuple[List[str], List[float]]:
-    """Main function for audio retrieval."""
     try:
         print(f"Extracting query melody from {query_path}")
         query_notes = extract_melody(query_path)
@@ -110,7 +102,6 @@ def audio_retrieval_main(query_path: str, audio_folder: str, n: int = 30) -> Tup
         print("Processing database files")
         similarities = []
         
-        # Get all MIDI files
         midi_files = [f for f in os.listdir(audio_folder) if f.endswith('.mid')]
         total_files = len(midi_files)
         
@@ -131,8 +122,7 @@ def audio_retrieval_main(query_path: str, audio_folder: str, n: int = 30) -> Tup
         
         if not similarities:
             raise ValueError("No valid comparisons could be made")
-            
-        # Sort by similarity and get top N
+
         similarities.sort(key=lambda x: x[1], reverse=True)
         top_n = similarities[:n]
         

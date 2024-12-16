@@ -1,5 +1,5 @@
 .music-page-main {
-    background-color: #0e3a5e;
+    background-color: #001830;
     color: white;
     display: flex;
     flex-direction: column;
@@ -7,7 +7,6 @@
     margin-top: 60px;
     min-height: calc(100vh - 60px);
     box-sizing: border-box;
-    overflow-x: hidden;
     width: calc(100vw - 300px);
   }
   

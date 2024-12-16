@@ -1,12 +1,13 @@
 import React, { useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import AudioDetailsModal from "./AudioDetail";
 import "./RetrievalPage.css";
 
 interface LocationState {
   queryImage: File;
   similarImages: string[];
   similarityScores: number[];
-  executionTime?: number; // Waktu eksekusi dalam ms
+  executionTime?: number;
 }
 
 interface ImageResult {
@@ -21,91 +22,55 @@ const RetrievalPage: React.FC = () => {
   const navigate = useNavigate();
   const state = location.state as LocationState;
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   if (!state) {
     return <div className="retrieval-page-main">No image data available</div>;
   }
 
-  const { queryImage, similarImages, similarityScores, executionTime } = state;
+  const { similarImages, similarityScores, executionTime } = state;
 
-  // Filter dan urutkan hasil, tambahkan fallback jika tidak ada similarity >= 70%
+  // Filter dan urutkan hasil
   const filteredAndSortedResults: ImageResult[] = useMemo(() => {
     const allResults = similarImages
       .map((filename, index) => ({
         filename,
-        similarity: similarityScores[index] * 100, // Ubah ke persentase
+        similarity: similarityScores[index] * 100,
       }))
       .sort((a, b) => b.similarity - a.similarity);
 
-    // Filter hanya similarity >= 70%
     const filteredResults = allResults.filter((result) => result.similarity >= 70);
 
-    // Jika tidak ada hasil di atas 70%, tambahkan 1 hasil terbaik
     if (filteredResults.length === 0 && allResults.length > 0) {
-      filteredResults.push(allResults[0]); // Tambahkan hasil terbaik meskipun < 70%
-    }
-
-    // Reset halaman jika currentPage melebihi jumlah halaman
-    const maxPages = Math.ceil(filteredResults.length / ITEMS_PER_PAGE);
-    if (currentPage > maxPages && maxPages > 0) {
-      setCurrentPage(1);
+      filteredResults.push(allResults[0]);
     }
 
     return filteredResults;
-  }, [similarImages, similarityScores, currentPage]);
-
-  if (filteredAndSortedResults.length === 0) {
-    return (
-      <div className="retrieval-page-main">
-        <div className="results-section">
-          <h2>No similar images found</h2>
-          {executionTime && (
-            <p className="execution-time">
-              Execution time: {executionTime.toFixed(2)} ms
-            </p>
-          )}
-        </div>
-        <div className="navigation-section">
-          <button onClick={() => navigate(-1)} className="back-button">
-            Back
-          </button>
-        </div>
-      </div>
-    );
-  }
+  }, [similarImages, similarityScores]);
 
   const totalPages = Math.ceil(filteredAndSortedResults.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const paginatedResults = filteredAndSortedResults.slice(startIndex, endIndex);
+
+  // Data untuk halaman saat ini
+  const paginatedResults = filteredAndSortedResults.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   const handlePageChange = (page: number) => {
+    console.log("Changing page to:", page); // Debugging
     setCurrentPage(page);
-    window.scrollTo(0, 0); // Scroll ke atas setiap ganti halaman
+    window.scrollTo(0, 0);
   };
 
-  const renderPaginationButtons = () => {
-    if (totalPages <= 1) return null;
+  const openModal = (filename: string) => {
+    setSelectedImage(filename);
+    setIsModalOpen(true);
+  };
 
-    const buttons = [];
-    const maxVisibleButtons = 5;
-
-    let startPage = Math.max(1, currentPage - 2);
-    let endPage = Math.min(totalPages, startPage + maxVisibleButtons - 1);
-    startPage = Math.max(1, endPage - maxVisibleButtons + 1);
-
-    for (let i = startPage; i <= endPage; i++) {
-      buttons.push(
-        <button
-          key={i}
-          className={`pagination-button ${currentPage === i ? "active" : ""}`}
-          onClick={() => handlePageChange(i)}
-        >
-          {i}
-        </button>
-      );
-    }
-    return buttons;
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedImage(null);
   };
 
   return (
@@ -122,9 +87,15 @@ const RetrievalPage: React.FC = () => {
             Execution time: {executionTime.toFixed(2)} ms
           </p>
         )}
+
         <div className="results-grid">
           {paginatedResults.map((result, index) => (
-            <div key={index} className="result-item">
+            <div
+              key={index}
+              className="result-item"
+              onClick={() => openModal(result.filename)}
+              style={{ cursor: "pointer" }}
+            >
               <div className="result-cover">
                 <img
                   src={`http://localhost:8000/album_images/${result.filename}`}
@@ -142,6 +113,7 @@ const RetrievalPage: React.FC = () => {
           ))}
         </div>
 
+        {/* Pagination */}
         {totalPages > 1 && (
           <div className="pagination">
             <button
@@ -158,9 +130,15 @@ const RetrievalPage: React.FC = () => {
             >
               {"<"}
             </button>
-
-            {renderPaginationButtons()}
-
+            {[...Array(totalPages)].map((_, i) => (
+              <button
+                key={i}
+                className={`pagination-button ${currentPage === i + 1 ? "active" : ""}`}
+                onClick={() => handlePageChange(i + 1)}
+              >
+                {i + 1}
+              </button>
+            ))}
             <button
               className="pagination-button"
               onClick={() => handlePageChange(currentPage + 1)}
@@ -184,8 +162,17 @@ const RetrievalPage: React.FC = () => {
           Back
         </button>
       </div>
+
+      {/* AudioDetailsModal */}
+      <AudioDetailsModal
+        imageFile={selectedImage}
+        isOpen={isModalOpen}
+        onClose={closeModal}
+      />
     </div>
   );
 };
 
 export default RetrievalPage;
+
+
