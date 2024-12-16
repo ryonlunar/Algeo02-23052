@@ -32,7 +32,7 @@ def record_audio():
     audio = sd.rec(int(DURATION * SAMPLE_RATE), samplerate=SAMPLE_RATE, channels=CHANNEL, dtype='int16')
     sd.wait()
     
-    chunk_name = os.path.join(INPUT_DIR, f"chunk_{chunk_counter}.wav")
+    chunk_name = os.path.join(INPUT_DIR, f"recorded_mic.wav")
     save_audio(audio, chunk_name)
     
     chunk_counter += 1

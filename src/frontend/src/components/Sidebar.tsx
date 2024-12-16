@@ -585,7 +585,7 @@ const Sidebar: React.FC = () => {
         Audio
       </button>
 
-      <button className="sidebar_button" onClick={() => setShowMicSearchModal(true)}>
+      <button className="sidebar-button" onClick={() => setShowMicSearchModal(true)}>
         Microphone
       </button>
 

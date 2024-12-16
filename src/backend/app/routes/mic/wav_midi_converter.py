@@ -30,6 +30,16 @@ def batch_wav_to_midi(input_directory, output_directory, model_path=ICASSP_2022_
     for wav_file_path in wav_files:
         print(f"Memproses file: {wav_file_path}")
         try:
+            # Tentukan nama output MIDI
+            base_filename = os.path.basename(wav_file_path).replace('.wav', '')
+            midi_filename = f"{base_filename}_basic_pitch.mid"
+            midi_file_path = os.path.join(output_directory, midi_filename)
+            
+            # Hapus file MIDI yang sudah ada jika ada, untuk overwrite
+            if os.path.exists(midi_file_path):
+                os.remove(midi_file_path)
+                print(f"File lama ditemukan dan dihapus: {midi_file_path}")
+                
             # Fungsi Basic Pitch untuk mengonversi dan menyimpan hasilnya
             predict_and_save(
                 audio_path_list=[wav_file_path],

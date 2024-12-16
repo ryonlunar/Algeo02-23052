@@ -53,6 +53,8 @@ async def search_similar_audio(file: UploadFile = File(...)):
         print(f"Search completed in {execution_time}ms")
         print(f"Found {len(relative_paths)} similar songs")
         
+        
+        
         return JSONResponse(content={
             "similar_audios": relative_paths,
             "similarity_scores": distances,
