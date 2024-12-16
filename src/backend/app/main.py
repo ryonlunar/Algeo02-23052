@@ -42,7 +42,7 @@ print(f"BASE_DIR: {BASE_DIR}")
 print(f"UPLOAD_DIR: {UPLOAD_DIR}")
 print(f"AUDIO_DIR: {AUDIO_DIR}")
 
-DATABASE_URL = os.path.join(BASE_DIR, 'album_images.db')
+DATABASE_URL = os.path.join(BASE_DIR, 'database.db')
 engine = create_engine(f'sqlite:///{DATABASE_URL}', echo=True)
 Base.metadata.create_all(engine)
 

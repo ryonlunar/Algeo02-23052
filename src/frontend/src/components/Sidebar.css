@@ -1,94 +1,79 @@
-/* Container utama sidebar */
 .sidebar {
-  width: 300px; /* Lebar sidebar */
-  height: 100vh; /* Tinggi penuh */
-  background-color: #002D57; /* Warna biru tua */
-  position: fixed; /* Posisi fixed agar sidebar tetap di tempat */
-  top: 60px; /* Posisi di bagian atas */
-  left: 0; /* Posisi di sisi kiri */
+  width: 300px;
+  height: 100vh;
+  background-color: #002D57;
+  position: fixed;
+  top: 60px;
+  left: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 20px;
-  box-sizing: border-box;
-  z-index: 1; /* Pastikan sidebar tetap di atas konten */
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  z-index: 1;
 }
 
-/* Placeholder box */
 .placeholder {
   width: 240px;
   height: 170px;
   background-color: #002D57;
+  margin: 20px auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 20px; /* Jarak ke tombol */
-  border-radius: 8px; /* Sudut melengkung */
-  font-size: 20px;
+  border-radius: 12px;
+  border: 2px dashed #4a90e2;
   color: white;
-  border: 2px dashed #4a90e2; 
+  transition: all 0.2s ease;
 }
 
+.placeholder:hover {
+  border-color: #6aa8e8;
+  background-color: rgba(74, 144, 226, 0.1);
+}
 
-/* Tombol sidebar */
 .sidebar-button {
   width: 150px;
-  padding: 10px;
-  margin-bottom: 10px;
-  background-color: #007ACC; /* Warna biru */
+  padding: 12px;
+  margin: 10px auto;
+  background-color: #007ACC;
   color: white;
   border: none;
-  border-radius: 5px; /* Sudut melengkung */
+  border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
-  text-align: center;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
 .sidebar-button:hover {
-  background-color: #007ACC; /* Warna biru lebih terang saat hover */
+  background-color: #0088e4;
+  transform: translateY(-1px);
 }
 
-.upload-options{
+.upload-options {
   display: flex;
   flex-direction: column;
-  padding-bottom: 20px;
+  padding: 0 20px 20px 20px;
 }
 
 .upload-area {
   border: 2px dashed #004B8D;
-  border-radius: 8px;
-  padding: 32px;
-  margin-bottom: 20px;
+  border-radius: 10px;
+  padding: 24px;
+  margin-bottom: 16px;
   text-align: center;
   cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: rgba(0, 75, 141, 0.2);
 }
 
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.modal-actions button {
-  padding: 10px 20px;
-  background-color: #004B8D;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.modal-actions button:hover {
-  background-color: #007ACC;
-}
-
-.disabled-button {
-  opacity: 0.5;
-  cursor: not-allowed;
+.upload-area:hover {
+  border-color: #0088e4;
+  background-color: rgba(0, 75, 141, 0.3);
 }
 
 .upload-area.dragging {
   border-color: #4a90e2;
-  background-color: rgba(74, 144, 226, 0.1);
+  background-color: rgba(74, 144, 226, 0.2);
 }
 
 .file-input-label {
@@ -98,12 +83,23 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  gap: 12px;
+  color: white;
 }
 
 .upload-progress {
-  margin-top: 10px;
+  margin-top: 12px;
   color: #4a90e2;
+  font-size: 14px;
+}
+
+
+
+.query-audio{
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",    
+  height: "100%",          
 }
 
 .modal-overlay {
@@ -112,51 +108,76 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0.75);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  backdrop-filter: blur(4px);
 }
 
 .modal-content {
   background-color: #001830;
-  padding: 20px;
-  border-radius: 8px;
-  width: 400px;
+  padding: 24px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
   color: white;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 .modal-title {
   text-align: center;
   margin-bottom: 20px;
-}
-
-.upload-area {
-  border: 2px dashed #336699;
-  border-radius: 4px;
-  padding: 20px;
-  text-align: center;
-  cursor: pointer;
-  margin-bottom: 20px;
+  font-size: 18px;
+  font-weight: 600;
 }
 
 .modal-actions {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   justify-content: center;
-  margin-top: 15px;
+  margin-top: 20px;
 }
 
 .modal-actions button {
-  padding: 8px 16px;
+  padding: 10px 20px;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.modal-actions button:first-child {
+  background-color: #334155;
+  color: white;
+}
+
+.modal-actions button:last-child {
   background-color: #002b4d;
   color: white;
 }
 
 .modal-actions button:hover {
-  background-color: #003666;
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+}
+
+.disabled-button {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 250px;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
 }

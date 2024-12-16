@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import DefaultIcon from "../assets/default.jpeg";
 
 interface AudioResult {
   filename: string;
@@ -21,6 +22,7 @@ const AudioRetrievalPage = () => {
   const state = location.state as LocationState;
   const [currentPage, setCurrentPage] = useState(1);
   const [playingAudio, setPlayingAudio] = useState<string | null>(null);
+  const [mapper, setMapper] = useState<Record<string, string>>({});
 
   if (!state) {
     return <div className="retrieval-page-main">No audio data available</div>;
@@ -28,13 +30,35 @@ const AudioRetrievalPage = () => {
 
   const { queryAudio, similarAudios, similarityScores, executionTime } = state;
 
+  // Fetch the mapper data
+  useEffect(() => {
+    const fetchMapper = async () => {
+      try {
+        const response = await fetch("http://localhost:8000/mapper.txt");
+        const text = await response.text();
+        const mapping: Record<string, string> = {};
+        text.split("\n").forEach((line) => {
+          const [audioFile, imageFile] = line.split("\t");
+          if (audioFile && imageFile) {
+            mapping[audioFile.trim()] = imageFile.trim();
+          }
+        });
+        setMapper(mapping);
+      } catch (error) {
+        console.error("Error fetching mapper file:", error);
+      }
+    };
+
+    fetchMapper();
+  }, []);
+
   const filteredAndSortedResults: AudioResult[] = similarAudios
     .map((filename, index) => ({
       filename,
       similarity: similarityScores[index] * 100,
     }))
     .sort((a, b) => b.similarity - a.similarity)
-    .filter((result) => result.similarity >= 70);
+    .filter((result) => result.similarity >= 50);
 
   const totalPages = Math.ceil(filteredAndSortedResults.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -103,29 +127,40 @@ const AudioRetrievalPage = () => {
           </p>
         )}
         <div className="results-grid">
-          {paginatedResults.map((result, index) => (
-            <div key={index} className="result-item">
-              <div className="result-audio-player">
-                <button
-                  onClick={() => handlePlayAudio(result.filename)}
-                  className="play-button"
-                >
-                  {playingAudio === result.filename ? "⏸" : "▶"}
-                </button>
-                <audio
-                  id={result.filename}
-                  src={`http://localhost:8000/music_audios/${result.filename}`}
-                  onEnded={() => setPlayingAudio(null)}
+          {paginatedResults.map((result, index) => {
+            const imageFile = mapper[result.filename];
+
+            return (
+              <div key={index} className="result-item">
+                <div className="result-cover">
+                <img
+                  src={imageFile ? `http://localhost:8000/album_images/${imageFile}` : DefaultIcon}
+                  alt={imageFile || "Default image"}
+                  className="result-image"
                 />
+                </div>
+                <div className="player-section">
+                  <button
+                    onClick={() => handlePlayAudio(result.filename)}
+                    className="play-button"
+                  >
+                    {playingAudio === result.filename ? "⏸" : "▶"}
+                  </button>
+                  <audio
+                    id={result.filename}
+                    src={`http://localhost:8000/music_audios/${result.filename}`}
+                    onEnded={() => setPlayingAudio(null)}
+                  />
+                </div>
+                <div className="result-info">
+                  <div className="result-name">{result.filename}</div>
+                  <div className="result-similarity">
+                    Similarity: {result.similarity.toFixed(2)}%
+                  </div>
+                </div>
               </div>
-              <div className="result-info">
-                <span className="result-name">{result.filename}</span>
-                <span className="result-similarity">
-                  Similarity: {result.similarity.toFixed(2)}%
-                </span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {totalPages > 1 && (

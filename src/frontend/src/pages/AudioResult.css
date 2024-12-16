@@ -1,97 +1,160 @@
-/* Audio Result Styles */
 .result-audio-player {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 10px;
-    background-color: #002b4d;
+    gap: 12px;
+    padding: 12px;
     border-radius: 8px;
-    margin-bottom: 8px;
-}
+  }
+  
+  .result-cover {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px; 
+  }
 
-.play-button {
-    background: none;
+  .result-image{
+    padding-bottom: 10px;
+  }
+  
+ .player-section{
+    padding-top: 10px;
+ }
+
+  .play-button {
+    margin-top: 10px; 
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    padding: 8px;
+    border-radius: 50%;
+    background-color: #007bff;
+    color: white;
     border: none;
     cursor: pointer;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.play-button:hover {
-    transform: scale(1.1);
-    transition: transform 0.2s ease;
-}
-
-.play-button:active {
-    transform: scale(0.95);
-}
-
-/* Modified Result Item for Audio */
-.results-grid .result-item {
-    width: 200px;
-    height: auto;
-    background-color: #002b4d;
-    padding: 15px;
+    font-size: 16px;
+  }
+  
+  .play-button:hover {
+    background-color: #0056b3;
+  }
+    
+  .play-button:hover {
+    transform: scale(1.05);
+  }
+  
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    padding: 20px;
+    box-sizing: border-box;
+    width: 100%;
+  }
+  
+  .results-grid .result-item {
+    background-color: #1b4d73;
+    padding: 16px;
     border-radius: 8px;
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
-
-.results-grid .result-item:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-/* Result Info Styles */
-.result-info {
+    transition: all 0.2s ease;
+    cursor: pointer;
     display: flex;
     flex-direction: column;
-    gap: 5px;
-    text-align: center;
-}
-
-.result-name {
+    height: 140px;
+    justify-content: space-between;
+  }
+  
+  .results-grid .result-item:hover {
+    transform: translateY(-4px);
+    background-color: #225886;
+  }
+  
+  .result-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    height: 100%;
+  }
+  
+  .result-name {
     font-size: 14px;
     color: white;
-    margin-bottom: 4px;
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
-}
-
-.result-similarity {
-    font-size: 12px;
+    padding: 0 4px;
+    margin-top: auto;
+  }
+  
+  .result-similarity {
+    font-size: 13px;
     color: #8bb4fe;
-}
-
-/* Audio Controls */
-audio {
-    display: none;
-}
-
-/* Responsive Grid */
-@media (max-width: 1536px) {
+    margin-top: 4px;
+    padding: 0 4px;
+  }
+  
+  audio {
+    width: 100%;
+    margin-top: 8px;
+  }
+  
+  .retrieval-page-main {
+    margin-left: 300px;
+    margin-top: 60px;
+    min-height: calc(100vh - 60px);
+    background-color: #0e3a5e;
+    width: calc(100vw - 300px);
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+  
+  h2 {
+    color: white;
+    font-size: 20px;
+    margin: 20px;
+    font-weight: 500;
+  }
+  
+  .execution-time {
+    color: #8bb4fe;
+    font-size: 14px;
+    margin: 0 20px 20px;
+  }
+  
+  .navigation-section {
+    padding: 20px;
+  }
+  
+  .back-button {
+    padding: 10px 20px;
+    background-color: #1b4d73;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .back-button:hover {
+    background-color: #225886;
+    transform: translateY(-2px);
+  }
+  
+  @media (max-width: 1200px) {
     .results-grid {
-        grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     }
-}
-
-@media (max-width: 1280px) {
+  }
+  
+  @media (max-width: 768px) {
+    .retrieval-page-main {
+      margin-left: 0;
+      width: 100vw;
+    }
+    
     .results-grid {
-        grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+      padding: 16px;
     }
-}
-
-@media (max-width: 1024px) {
-    .results-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 768px) {
-    .results-grid {
-        grid-template-columns: repeat(1, 1fr);
-    }
-}
+  }

@@ -146,9 +146,13 @@ interface AudioModalProps {
   onClose: (submitted: boolean, file?: File, similarAudios?: string[], similarityScores?: number[], executionTime?: number) => void;
 }
 
+// Di bagian component AudioModal, sebelum return statement:
+
 const AudioModal: React.FC<AudioModalProps> = ({ isOpen, onClose }) => {
   const [file, setFile] = useState<File | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const controller = useRef<AbortController | null>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
@@ -162,26 +166,44 @@ const AudioModal: React.FC<AudioModalProps> = ({ isOpen, onClose }) => {
     const formData = new FormData();
     formData.append("file", file);
 
-    try {
-      const startTime = performance.now();
-      const response = await fetch("http://localhost:8000/api/audio-search", {
-        method: "POST",
-        body: formData,
-      });
-      const endTime = performance.now();
+    controller.current = new AbortController();
+    setIsProcessing(true);
 
-      if (response.ok) {
+    try {
+        const startTime = performance.now();
+        const response = await fetch("http://localhost:8000/api/audio-search", {
+            method: "POST",
+            body: formData,
+            signal: controller.current.signal
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const data = await response.json();
-        const executionTime = data.execution_time || endTime - startTime;
+        const executionTime = data.execution_time || performance.now() - startTime;
         onClose(true, file, data.similar_audios, data.similarity_scores, executionTime);
-      } else {
-        console.error("Audio search failed");
-        onClose(false);
-      }
     } catch (error) {
-      console.error("Error searching audio:", error);
-      onClose(false);
+        if (error.name === 'AbortError') {
+            console.log('Request was cancelled');
+        } else {
+            console.error("Error searching audio:", error);
+        }
+        onClose(false);
+    } finally {
+        setIsProcessing(false);
+        controller.current = null;
     }
+  };
+
+  const handleCancel = () => {
+    if (isProcessing && controller.current) {
+        controller.current.abort();
+    }
+    setFile(null);
+    setIsProcessing(false);
+    onClose(false);
   };
 
   if (!isOpen) return null;
@@ -201,9 +223,9 @@ const AudioModal: React.FC<AudioModalProps> = ({ isOpen, onClose }) => {
           />
         </div>
         <div className="modal-actions">
-          <button onClick={() => onClose(false)}>Cancel</button>
+          <button onClick={handleCancel}>Cancel</button>
           <button onClick={handleSubmitAudio} disabled={!file}>
-            Find
+            {isProcessing ? 'Processing...' : 'Find'}
           </button>
         </div>
       </div>
@@ -368,24 +390,46 @@ const Sidebar: React.FC = () => {
             />
           </div>
         ) : queryAudio ? (
-          <div className="query-audio">
+          <div
+            className="query-audio"
+            style={{
+              display: "flex",
+              flexDirection: "column", 
+              justifyContent: "center", 
+              alignItems: "center", 
+              height: "100%", 
+            }}
+          >
             <img
               src="/src/assets/icon.png"
               alt="Audio Icon"
               style={{
-                maxWidth: "240px",
-                maxHeight: "150px",
+                maxWidth: "200px",
+                maxHeight: "110px",
                 objectFit: "contain",
               }}
             />
-            <p>{queryAudio.name}</p>
+            <div className="audio-teks">
+              <p style={{ margin: "10px 0 0 0", textAlign: "center" }}>
+                {queryAudio.name}
+              </p>
+            </div>
           </div>
         ) : (
-          <>
-            <p>Image: {uploadedFiles.image || "None"}</p>
-            <p>Audio: {uploadedFiles.audio || "None"}</p>
-            <p>Mapper: {uploadedFiles.mapper || "None"}</p>
-          </>
+          <div className="uploaded-files">
+            <p>
+              <span className="file-label">Image:</span>{" "}
+              <span className="file-value">{uploadedFiles.image || "None"}</span>
+            </p>
+            <p>
+              <span className="file-label">Audio:</span>{" "}
+              <span className="file-value">{uploadedFiles.audio || "None"}</span>
+            </p>
+            <p>
+              <span className="file-label">Mapper:</span>{" "}
+              <span className="file-value">{uploadedFiles.mapper || "None"}</span>
+            </p>
+          </div>
         )}
       </div>
 

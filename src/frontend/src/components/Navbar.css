@@ -134,16 +134,16 @@
   }
 
   .navbar-search.show {
-    display: flex; /* Menampilkan search bar jika hamburger ditekan */
+    display: flex;
   }
 
   .hamburger {
-    display: flex; /* Menampilkan tombol hamburger pada layar kecil */
+    display: flex;
   }
 }
 
 @media (min-width: 769px) {
   .hamburger {
-    display: none; /* Menyembunyikan tombol hamburger di layar besar */
+    display: none; 
   }
 }

@@ -9,7 +9,7 @@ const AlbumPage: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const itemsPerPage = 18;
+    const itemsPerPage = 15;
 
     useEffect(() => {
         axios.get('http://localhost:8000/albums')
