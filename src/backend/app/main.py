@@ -1,7 +1,9 @@
 import os
 import uuid
 import shutil
-import time
+import zipfile
+import traceback
+import re
 from fastapi import FastAPI, UploadFile, File, Depends, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,8 +11,8 @@ from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from .routes.image import router as image_router
+from .routes.audio_routes import router as audio_router
 
-# Database ORM setup
 Base = declarative_base()
 
 class AlbumImage(Base):
@@ -25,28 +27,28 @@ class MusicAudio(Base):
     name = Column(String, nullable=False)
     path = Column(String, nullable=False)
 
-# Directory paths
-BASE_DIR = os.path.dirname(__file__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_DIR = os.path.join(BASE_DIR, 'album_images')
 AUDIO_DIR = os.path.join(BASE_DIR, 'music_audios')
 TEMP_DIR = os.path.join(BASE_DIR, 'temp')
 
-# Ensure directories exist
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(AUDIO_DIR, exist_ok=True)
 os.makedirs(TEMP_DIR, exist_ok=True)
 
-# Database setup
+print(f"Current working directory: {os.getcwd()}")
+print(f"BASE_DIR: {BASE_DIR}")
+print(f"UPLOAD_DIR: {UPLOAD_DIR}")
+print(f"AUDIO_DIR: {AUDIO_DIR}")
+
 DATABASE_URL = os.path.join(BASE_DIR, 'album_images.db')
 engine = create_engine(f'sqlite:///{DATABASE_URL}', echo=True)
 Base.metadata.create_all(engine)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# FastAPI app setup
 app = FastAPI(title="Music Album API")
 
-# Database dependency
 def get_db():
     db = SessionLocal()
     try:
@@ -54,7 +56,111 @@ def get_db():
     finally:
         db.close()
 
-# Middleware for CORS
+def sanitize_filename(filename: str) -> str:
+    base_name = os.path.splitext(filename)[0]
+    extension = os.path.splitext(filename)[1]
+    sanitized_base = re.sub(r'[^a-zA-Z0-9_.-]', '_', base_name.replace(' ', '_'))
+    return f"{sanitized_base}{extension}"
+
+def sync_folder_to_db(db: Session):
+    print("Starting database sync...")
+    
+    # Clear existing data
+    db.query(AlbumImage).delete()
+    db.query(MusicAudio).delete()
+    
+    # Sync images
+    for filename in os.listdir(UPLOAD_DIR):
+        if not filename.lower().endswith('.zip'):
+            file_path = os.path.join(UPLOAD_DIR, filename)
+            db_path = f"/album_images/{filename}"
+            if os.path.isfile(file_path):
+                new_image = AlbumImage(name=filename, path=db_path)
+                db.add(new_image)
+                print(f"Added new image to DB: {filename}")
+
+    # Sync audio files
+    for filename in os.listdir(AUDIO_DIR):
+        if filename.lower().endswith(('.mid', '.midi')):
+            file_path = os.path.join(AUDIO_DIR, filename)
+            db_path = f"/music_audios/{filename}"
+            if os.path.isfile(file_path):
+                new_audio = MusicAudio(name=filename, path=db_path)
+                db.add(new_audio)
+                print(f"Added new audio to DB: {filename}")
+
+    try:
+        db.commit()
+        print("Database sync completed successfully")
+    except Exception as e:
+        db.rollback()
+        print(f"Error syncing database: {str(e)}")
+        raise
+
+def process_extracted_file(file_path: str, original_filename: str, db: Session):
+    print(f"Processing extracted file: {original_filename}")
+    
+    if original_filename.lower().endswith('.zip'):
+        return None
+
+    file_ext = os.path.splitext(original_filename)[1].lower()
+    sanitized_name = sanitize_filename(original_filename)
+    
+    if file_ext in ['.jpg', '.jpeg', '.png', '.gif']:
+        destination_dir = UPLOAD_DIR
+        destination_path = os.path.join(destination_dir, sanitized_name)
+        db_path = f"/album_images/{sanitized_name}"
+        model = AlbumImage
+        file_type = "image"
+    elif file_ext in ['.mid', '.midi']:
+        destination_dir = AUDIO_DIR
+        destination_path = os.path.join(destination_dir, sanitized_name)
+        db_path = f"/music_audios/{sanitized_name}"
+        model = MusicAudio
+        file_type = "audio"
+    else:
+        return None
+
+    print(f"Copying file to: {destination_path}")
+    try:
+        shutil.copy2(file_path, destination_path)
+        print(f"File copied successfully")
+        
+        # Check if entry already exists
+        existing = db.query(model).filter_by(name=sanitized_name).first()
+        if existing:
+            print(f"Updating existing entry: {sanitized_name}")
+            existing.path = db_path
+        else:
+            print(f"Creating new entry: {sanitized_name}")
+            db_entry = model(name=sanitized_name, path=db_path)
+            db.add(db_entry)
+        
+        return {
+            "original_name": original_filename,
+            "stored_name": sanitized_name,
+            "type": file_type,
+            "path": db_path
+        }
+    except Exception as e:
+        print(f"Error processing file {original_filename}: {str(e)}")
+        traceback.print_exc()
+        return None
+
+@app.on_event("startup")
+async def on_startup():
+    print("Starting application...")
+    try:
+        db = SessionLocal()
+        try:
+            sync_folder_to_db(db)
+        finally:
+            db.close()
+        print("Startup completed successfully")
+    except Exception as e:
+        print(f"Error during startup: {str(e)}")
+        raise
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -63,122 +169,288 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount static directories
 app.mount("/album_images", StaticFiles(directory=UPLOAD_DIR), name="album_images")
 app.mount("/music_audios", StaticFiles(directory=AUDIO_DIR), name="music_audios")
 app.mount("/temp", StaticFiles(directory=TEMP_DIR), name="temp")
 
-# Include image routes for retrieval functionality
 app.include_router(image_router, prefix="/api")
+app.include_router(audio_router, prefix="/api")
 
-@app.post("/upload-image")
-async def upload_image(file: UploadFile = File(...), db: Session = Depends(get_db)):
-    unique_filename = f"{uuid.uuid4()}_{file.filename}"
-    file_path = os.path.join(UPLOAD_DIR, unique_filename)
+@app.post("/upload-zip")
+async def upload_zip(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    if not file.filename.lower().endswith('.zip'):
+        raise HTTPException(status_code=400, detail="File must be a ZIP archive")
 
-    try:
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        
-        new_image = AlbumImage(name=unique_filename, path=file_path)
-        db.add(new_image)
-        db.commit()
-        db.refresh(new_image)
-
-        return {"message": "Image uploaded successfully", "file_path": file_path}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error uploading image: {str(e)}")
-
-@app.post("/upload-audio")
-async def upload_audio(file: UploadFile = File(...), db: Session = Depends(get_db)):
-    unique_filename = f"{uuid.uuid4()}_{file.filename}"
-    file_path = os.path.join(AUDIO_DIR, unique_filename)
+    temp_dir = os.path.join(TEMP_DIR, str(uuid.uuid4()))
+    os.makedirs(temp_dir, exist_ok=True)
+    print(f"Created temp directory: {temp_dir}")
 
     try:
-        with open(file_path, "wb") as buffer:
+        # Save ZIP to temp directory
+        zip_path = os.path.join(temp_dir, file.filename)
+        with open(zip_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
-        
-        new_audio = MusicAudio(name=unique_filename, path=file_path)
-        db.add(new_audio)
-        db.commit()
-        db.refresh(new_audio)
 
-        return {"message": "Audio uploaded successfully", "file_path": file_path}
+        if not zipfile.is_zipfile(zip_path):
+            raise HTTPException(status_code=400, detail="Invalid ZIP archive")
+
+        processed_files = []
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            # Extract to temp directory
+            zip_ref.extractall(temp_dir)
+            
+            # Process files from extracted content
+            for root, _, files in os.walk(temp_dir):
+                for filename in files:
+                    # Skip the original ZIP file itself
+                    if filename == file.filename:
+                        continue
+                        
+                    file_path = os.path.join(root, filename)
+                    
+                    # Process image files
+                    if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')):
+                        destination_path = os.path.join(UPLOAD_DIR, filename)
+                        shutil.copy2(file_path, destination_path)
+                        db_path = f"/album_images/{filename}"
+                        new_image = AlbumImage(name=filename, path=db_path)
+                        db.add(new_image)
+                        processed_files.append({
+                            "filename": filename,
+                            "type": "image",
+                            "path": db_path
+                        })
+                    
+                    # Process audio files
+                    elif filename.lower().endswith(('.mid', '.midi')):
+                        destination_path = os.path.join(AUDIO_DIR, filename)
+                        shutil.copy2(file_path, destination_path)
+                        db_path = f"/music_audios/{filename}"
+                        new_audio = MusicAudio(name=filename, path=db_path)
+                        db.add(new_audio)
+                        processed_files.append({
+                            "filename": filename,
+                            "type": "audio",
+                            "path": db_path
+                        })
+
+        # Commit changes to database
+        db.commit()
+        print(f"Processed {len(processed_files)} files successfully")
+        return {
+            "message": "ZIP archive processed successfully",
+            "processed_files": processed_files
+        }
+    
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error uploading audio: {str(e)}")
+        db.rollback()
+        print(f"Error processing ZIP: {str(e)}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error processing ZIP archive: {str(e)}")
+    finally:
+        # Clean up temp directory
+        shutil.rmtree(temp_dir, ignore_errors=True)
 
 @app.post("/submit-all")
 async def submit_all(
     images: list[UploadFile] = File(default=[]),
     audios: list[UploadFile] = File(default=[]),
+    mapper: UploadFile = File(default=None),
     db: Session = Depends(get_db)
 ):
+    print(f"Received {len(images)} images, {len(audios)} audios")
     responses = []
     
     try:
         # Process images
-        if images:
-            for image in images:
-                if not image.content_type.startswith('image/'):
-                    raise HTTPException(400, detail=f"File {image.filename} must be an image")
+        for image in images:
+            print(f"Processing image: {image.filename}")
+            
+            # Handle ZIP files
+            if image.filename.lower().endswith('.zip'):
+                print("Processing image ZIP file")
+                temp_dir = os.path.join(TEMP_DIR, str(uuid.uuid4()))
+                os.makedirs(temp_dir, exist_ok=True)
                 
-                unique_filename = f"{uuid.uuid4()}_{image.filename}"
-                file_path = os.path.join(UPLOAD_DIR, unique_filename)
+                try:
+                    # Save and extract ZIP
+                    zip_path = os.path.join(temp_dir, image.filename)
+                    with open(zip_path, "wb") as buffer:
+                        shutil.copyfileobj(image.file, buffer)
+                    
+                    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                        zip_ref.extractall(temp_dir)
+                    
+                    # Process extracted files
+                    for root, _, files in os.walk(temp_dir):
+                        for filename in files:
+                            if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')):
+                                file_path = os.path.join(root, filename)
+                                sanitized_name = sanitize_filename(filename)
+                                destination_path = os.path.join(UPLOAD_DIR, sanitized_name)
+                                db_path = f"/album_images/{sanitized_name}"
+                                
+                                # Copy file to destination
+                                shutil.copy2(file_path, destination_path)
+                                
+                                # Add to database
+                                new_image = AlbumImage(name=sanitized_name, path=db_path)
+                                db.add(new_image)
+                                responses.append({
+                                    "file": sanitized_name,
+                                    "type": "image",
+                                    "path": db_path
+                                })
+                                print(f"Processed extracted image: {sanitized_name}")
+                finally:
+                    shutil.rmtree(temp_dir, ignore_errors=True)
+                    
+            # Handle regular image files
+            elif image.filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')):
+                sanitized_name = sanitize_filename(image.filename)
+                file_path = os.path.join(UPLOAD_DIR, sanitized_name)
+                db_path = f"/album_images/{sanitized_name}"
                 
                 with open(file_path, "wb") as buffer:
                     shutil.copyfileobj(image.file, buffer)
                 
-                new_image = AlbumImage(name=unique_filename, path=file_path)
+                new_image = AlbumImage(name=sanitized_name, path=db_path)
                 db.add(new_image)
                 responses.append({
-                    "file": unique_filename,
+                    "file": sanitized_name,
                     "type": "image",
-                    "path": file_path
+                    "path": db_path
                 })
+                print(f"Processed single image: {sanitized_name}")
 
-        # Process audios
-        if audios:
-            for audio in audios:
-                if not audio.content_type.startswith('audio/'):
-                    raise HTTPException(400, detail=f"File {audio.filename} must be an audio file")
+        # Process audio files
+        for audio in audios:
+            print(f"Processing audio: {audio.filename}")
+            
+            # Handle ZIP files containing audio
+            if audio.filename.lower().endswith('.zip'):
+                print("Processing audio ZIP file")
+                temp_dir = os.path.join(TEMP_DIR, str(uuid.uuid4()))
+                os.makedirs(temp_dir, exist_ok=True)
                 
-                unique_filename = f"{uuid.uuid4()}_{audio.filename}"
-                file_path = os.path.join(AUDIO_DIR, unique_filename)
+                try:
+                    # Save and extract ZIP
+                    zip_path = os.path.join(temp_dir, audio.filename)
+                    with open(zip_path, "wb") as buffer:
+                        shutil.copyfileobj(audio.file, buffer)
+                    
+                    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                        zip_ref.extractall(temp_dir)
+                    
+                    # Process extracted files
+                    for root, _, files in os.walk(temp_dir):
+                        for filename in files:
+                            if filename.lower().endswith(('.mid', '.midi')):
+                                file_path = os.path.join(root, filename)
+                                sanitized_name = sanitize_filename(filename)
+                                destination_path = os.path.join(AUDIO_DIR, sanitized_name)
+                                db_path = f"/music_audios/{sanitized_name}"
+                                
+                                # Copy file to destination
+                                shutil.copy2(file_path, destination_path)
+                                
+                                # Add to database
+                                new_audio = MusicAudio(name=sanitized_name, path=db_path)
+                                db.add(new_audio)
+                                responses.append({
+                                    "file": sanitized_name,
+                                    "type": "audio",
+                                    "path": db_path
+                                })
+                                print(f"Processed extracted audio: {sanitized_name}")
+                finally:
+                    shutil.rmtree(temp_dir, ignore_errors=True)
+            
+            # Handle regular audio files
+            elif audio.filename.lower().endswith(('.mid', '.midi')):
+                sanitized_name = sanitize_filename(audio.filename)
+                file_path = os.path.join(AUDIO_DIR, sanitized_name)
+                db_path = f"/music_audios/{sanitized_name}"
                 
                 with open(file_path, "wb") as buffer:
                     shutil.copyfileobj(audio.file, buffer)
                 
-                new_audio = MusicAudio(name=unique_filename, path=file_path)
+                new_audio = MusicAudio(name=sanitized_name, path=db_path)
                 db.add(new_audio)
                 responses.append({
-                    "file": unique_filename,
+                    "file": sanitized_name,
                     "type": "audio",
-                    "path": file_path
+                    "path": db_path
                 })
+                print(f"Processed single audio: {sanitized_name}")
 
-        # Commit all changes to database
+        # Process mapper file
+        if mapper:
+            print(f"Processing mapper: {mapper.filename}")
+            sanitized_name = sanitize_filename(mapper.filename)
+            file_path = os.path.join(TEMP_DIR, sanitized_name)
+            
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(mapper.file, buffer)
+            responses.append({
+                "file": sanitized_name,
+                "type": "mapper",
+                "path": file_path
+            })
+            print(f"Processed mapper file: {sanitized_name}")
+
         db.commit()
-        
+        print("All files processed successfully")
         return {
             "message": "All files submitted successfully",
             "files": responses
         }
+        
     except Exception as e:
-        # Rollback on error
         db.rollback()
+        print(f"Error in submit_all: {str(e)}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error processing files: {str(e)}")
+    
+@app.post("/sync-database")
+async def force_sync_database(db: Session = Depends(get_db)):
+    try:
+        sync_folder_to_db(db)
+        return {"message": "Database synchronized successfully"}
+    except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# Retrieve all albums
 @app.get("/albums")
 async def get_albums(db: Session = Depends(get_db)):
-    albums = db.query(AlbumImage).all()
-    return [{"id": album.id, "name": album.name, "path": album.path} for album in albums]
+    print("Fetching albums...")
+    try:
+        albums = db.query(AlbumImage).all()
+        print(f"Found {len(albums)} albums")
+        return [{
+            "id": album.id,
+            "name": album.name,
+            "path": album.path
+        } for album in albums]
+    except Exception as e:
+        print(f"Error getting albums: {str(e)}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error getting albums: {str(e)}")
 
-# Retrieve all audios
 @app.get("/audios")
 async def get_audios(db: Session = Depends(get_db)):
-    audios = db.query(MusicAudio).all()
-    return [{"id": audio.id, "name": audio.name, "path": audio.path} for audio in audios]
+    print("Fetching audios...")
+    try:
+        audios = db.query(MusicAudio).all()
+        print(f"Found {len(audios)} audios")
+        return [{
+            "id": audio.id,
+            "name": audio.name,
+            "path": audio.path
+        } for audio in audios]
+    except Exception as e:
+        print(f"Error getting audios: {str(e)}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error getting audios: {str(e)}")
 
 @app.get("/")
 async def read_root():

@@ -5,6 +5,7 @@ import Sidebar from "./components/Sidebar";
 import AlbumPage from "./pages/AlbumPage";
 import MusicPage from "./pages/MusicPage";
 import RetrievalPage from "./pages/RetrievalPage";
+import AudioRetrievalPage from "./pages/AudioResult";
 
 const App = () => {
   return (
@@ -15,6 +16,7 @@ const App = () => {
         <Route path="/" element={<AlbumPage />} />
         <Route path="/music" element={<MusicPage />} />
         <Route path="/retrieval" element={<RetrievalPage />} />
+        <Route path="/audio-retrieval" element={<AudioRetrievalPage />} />
       </Routes>
     </Router>
   );

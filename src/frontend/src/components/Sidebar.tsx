@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Sidebar.css";
 
-// Komponen UploadModal (Untuk unggahan file biasa)
+// Upload Modal for regular file uploads
 interface UploadModalProps {
   isOpen: boolean;
   onClose: (submitted?: boolean, fileName?: string, file?: File) => void;
@@ -31,7 +31,11 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, title }) => 
 
   const handleSaveLocally = () => {
     if (file) {
-      onClose(true, file.name, file);
+      if (file.type === 'application/zip') {
+        onClose(true, file.name, file);
+      } else {
+        onClose(true, file.name, file);
+      }
     }
   };
 
@@ -53,7 +57,7 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, title }) => 
             ref={fileInputRef}
             onChange={handleFileSelect}
             style={{ display: "none" }}
-            accept={title === "Image" ? "image/*" : "audio/*"}
+            accept={title === "Image" ? ".zip,image/*" : title === "Audio" ? ".zip,audio/*" : "*"}
           />
         </div>
         <div className="modal-actions">
@@ -67,10 +71,10 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, title }) => 
   );
 };
 
-// Komponen PictureModal (Untuk logika retrieval gambar)
+// Picture Modal for image retrieval
 interface PictureModalProps {
   isOpen: boolean;
-  onClose: (submitted: boolean, file?: File, similarImages?: string[], similarityScores?: number[]) => void;
+  onClose: (submitted: boolean, file?: File, similarImages?: string[], similarityScores?: number[], executionTime?: number) => void;
 }
 
 const PictureModal: React.FC<PictureModalProps> = ({ isOpen, onClose }) => {
@@ -85,23 +89,22 @@ const PictureModal: React.FC<PictureModalProps> = ({ isOpen, onClose }) => {
 
   const handleSubmitRetrieval = async () => {
     if (!file) return;
-  
+
     const formData = new FormData();
     formData.append("file", file);
-  
+
     try {
-      const startTime = performance.now(); // Tambahkan waktu mulai
+      const startTime = performance.now();
       const response = await fetch("http://localhost:8000/api/image-search", {
         method: "POST",
         body: formData,
       });
-      const endTime = performance.now(); // Tambahkan waktu akhir
-  
+      const endTime = performance.now();
+
       if (response.ok) {
         const data = await response.json();
-        const executionTime = data.execution_time || endTime - startTime; // Gunakan nilai dari server atau hitung manual
-  
-        onClose(true, file, data.similar_images, data.similarity_scores, executionTime); // Kirim executionTime
+        const executionTime = data.execution_time || endTime - startTime;
+        onClose(true, file, data.similar_images, data.similarity_scores, executionTime);
       } else {
         console.error("Retrieval failed");
         onClose(false);
@@ -111,7 +114,6 @@ const PictureModal: React.FC<PictureModalProps> = ({ isOpen, onClose }) => {
       onClose(false);
     }
   };
-  
 
   if (!isOpen) return null;
 
@@ -140,7 +142,78 @@ const PictureModal: React.FC<PictureModalProps> = ({ isOpen, onClose }) => {
   );
 };
 
-// Sidebar utama
+// Audio Modal for audio retrieval
+interface AudioModalProps {
+  isOpen: boolean;
+  onClose: (submitted: boolean, file?: File, similarAudios?: string[], similarityScores?: number[], executionTime?: number) => void;
+}
+
+const AudioModal: React.FC<AudioModalProps> = ({ isOpen, onClose }) => {
+  const [file, setFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.[0]) {
+      setFile(e.target.files[0]);
+    }
+  };
+
+  const handleSubmitAudio = async () => {
+    if (!file) return;
+  
+    const formData = new FormData();
+    formData.append("file", file);
+  
+    try {
+      const startTime = performance.now();
+      const response = await fetch("http://localhost:8000/api/audio-search", {
+        method: "POST",
+        body: formData,
+      });
+      const endTime = performance.now();
+  
+      if (response.ok) {
+        const data = await response.json();
+        const executionTime = data.execution_time || endTime - startTime;
+        onClose(true, file, data.similar_audios, data.similarity_scores, executionTime);
+      } else {
+        console.error("Audio search failed");
+        onClose(false);
+      }
+    } catch (error) {
+      console.error("Error searching audio:", error);
+      onClose(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <h2 className="modal-title">Upload Audio for Search</h2>
+        <div className="upload-area" onClick={() => fileInputRef.current?.click()}>
+          {file ? <p>File Selected: {file.name}</p> : <p>Select file or Drag and drop here</p>}
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileSelect}
+            style={{ display: "none" }}
+            accept="audio/*"
+          />
+        </div>
+        <div className="modal-actions">
+          <button onClick={() => onClose(false)}>Cancel</button>
+          <button onClick={handleSubmitAudio} disabled={!file}>
+            Find
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Main Sidebar component
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
 
@@ -149,6 +222,7 @@ const Sidebar: React.FC = () => {
   const [showAudioModal, setShowAudioModal] = useState(false);
   const [showMapperModal, setShowMapperModal] = useState(false);
   const [showPictureModal, setShowPictureModal] = useState(false);
+  const [showAudioSearchModal, setShowAudioSearchModal] = useState(false);
 
   const [uploadedFiles, setUploadedFiles] = useState({
     image: "",
@@ -165,8 +239,11 @@ const Sidebar: React.FC = () => {
   });
 
   const [queryImage, setQueryImage] = useState<File | null>(null);
+  const [queryAudio, setQueryAudio] = useState<File | null>(null);
   const [similarImages, setSimilarImages] = useState<string[]>([]);
+  const [similarAudios, setSimilarAudios] = useState<string[]>([]);
   const [similarityScores, setSimilarityScores] = useState<number[]>([]);
+  const [audioSimilarityScores, setAudioSimilarityScores] = useState<number[]>([]);
 
   const handleSavePendingUpload = (type: "image" | "audio" | "mapper", fileName: string, file: File) => {
     setUploadedFiles((prev) => ({
@@ -184,7 +261,7 @@ const Sidebar: React.FC = () => {
     file?: File,
     similarImages?: string[],
     similarityScores?: number[],
-    executionTime?: number // Tambahkan ini
+    executionTime?: number
   ) => {
     if (submitted && file) {
       setQueryImage(file);
@@ -201,7 +278,29 @@ const Sidebar: React.FC = () => {
     }
     setShowPictureModal(false);
   };
-  
+
+  const handleAudioRetrieval = (
+    submitted: boolean,
+    file?: File,
+    similarAudios?: string[],
+    similarityScores?: number[],
+    executionTime?: number
+  ) => {
+    if (submitted && file) {
+      setQueryAudio(file);
+      setSimilarAudios(similarAudios || []);
+      setAudioSimilarityScores(similarityScores || []);
+      navigate("/audio-retrieval", {
+        state: {
+          queryAudio: file,
+          similarAudios: similarAudios || [],
+          similarityScores: similarityScores || [],
+          executionTime,
+        },
+      });
+    }
+    setShowAudioSearchModal(false);
+  };
 
   const handleSubmitAll = async () => {
     if (!selectedFiles.image && !selectedFiles.audio && !selectedFiles.mapper) {
@@ -271,6 +370,19 @@ const Sidebar: React.FC = () => {
               }}
             />
           </div>
+        ) : queryAudio ? (
+          <div className="query-audio">
+            <img
+              src="/src/assets/icon.png"
+              alt="Audio Icon"
+              style={{
+                maxWidth: "240px",
+                maxHeight: "150px",
+                objectFit: "contain",
+              }}
+            />
+            <p>{queryAudio.name}</p>
+          </div>
         ) : (
           <>
             <p>Image: {uploadedFiles.image || "None"}</p>
@@ -305,6 +417,10 @@ const Sidebar: React.FC = () => {
         Pictures
       </button>
 
+      <button className="sidebar-button" onClick={() => setShowAudioSearchModal(true)}>
+        Audio
+      </button>
+
       <UploadModal
         isOpen={showImageModal}
         onClose={(submitted, fileName, file) => {
@@ -336,6 +452,7 @@ const Sidebar: React.FC = () => {
         title="Mapper"
       />
       <PictureModal isOpen={showPictureModal} onClose={handlePictureRetrieval} />
+      <AudioModal isOpen={showAudioSearchModal} onClose={handleAudioRetrieval} />
     </div>
   );
 };
