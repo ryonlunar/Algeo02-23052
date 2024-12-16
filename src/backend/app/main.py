@@ -8,8 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
-from routes.image import router as image_router
-from routes.audio_routes import router as audio_router
+from .routes.image import router as image_router
+from .routes.audio_routes import router as audio_router
 
 # Database ORM setup
 Base = declarative_base()
