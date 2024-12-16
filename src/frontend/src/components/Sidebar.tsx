@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Sidebar.css";
 
@@ -146,6 +146,7 @@ interface AudioModalProps {
 
 const AudioModal: React.FC<AudioModalProps> = ({ isOpen, onClose }) => {
   const [file, setFile] = useState<File | null>(null);
+  const [isMicrophoneModalOpen, setIsMicrophoneModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -182,6 +183,17 @@ const AudioModal: React.FC<AudioModalProps> = ({ isOpen, onClose }) => {
     }
   };
 
+  const openMicrophoneModal = () => {
+    setIsMicrophoneModalOpen(true); // Open microphone modal
+  };
+
+  const closeMicrophoneModal = (audioFile: File | null) => {
+    setIsMicrophoneModalOpen(false); // Close microphone modal
+    if (audioFile) {
+      setFile(audioFile); // Set the recorded file if any
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -203,6 +215,68 @@ const AudioModal: React.FC<AudioModalProps> = ({ isOpen, onClose }) => {
           <button onClick={handleSubmitAudio} disabled={!file}>
             Find
           </button>
+          <button onClick={openMicrophoneModal}>
+            Use Microphone
+          </button>
+        </div>
+      </div>
+
+      {/* Microphone Modal */}
+      {isMicrophoneModalOpen && (
+        <MicrophoneModal onClose={closeMicrophoneModal} />
+      )}
+    </div>
+  );
+};
+
+
+const MicrophoneModal: React.FC<{ onClose: (audioFile: File | null) => void }> = ({ onClose }) => {
+  const [isRecording, setIsRecording] = useState(false);
+
+  // Handle start recording
+  const handleStartRecording = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/start-recording/", {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        setIsRecording(true);
+        console.log("Recording started...");
+
+        // Wait for 10 seconds (matching the backend recording duration)
+        setTimeout(async () => {
+          setIsRecording(false);
+
+          // Fetch the recorded audio file after 10 seconds
+          const audioResponse = await fetch("http://localhost:8000/get-recorded-audio/");
+          const audioBlob = await audioResponse.blob();
+          const audioFile = new File([audioBlob], "recorded_audio.mid", { type: "audio/mid" });
+
+          // Return the audio file to the parent
+          onClose(audioFile);
+        }, 10000); // 10 seconds duration to match the backend recording duration
+      } else {
+        console.error("Failed to start recording");
+        onClose(null); // In case of failure, close the modal
+      }
+    } catch (error) {
+      console.error("Error starting recording:", error);
+      onClose(null); // Close in case of error
+    }
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <h2 className="modal-title">Record Audio for Search</h2>
+        <div className="modal-actions">
+          <button onClick={() => onClose(null)}>Cancel</button>
+          {!isRecording ? (
+            <button onClick={handleStartRecording}>Start Recording</button>
+          ) : (
+            <button disabled>Recording...</button>
+          )}
         </div>
       </div>
     </div>

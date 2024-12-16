@@ -12,8 +12,6 @@ def batch_wav_to_midi(input_directory, output_directory, model_path=ICASSP_2022_
         output_directory (str): Path ke direktori output untuk menyimpan file MIDI.
         model_path (str): Path ke model yang digunakan untuk prediksi.
 
-    Returns:
-        None
     """
     # Pastikan direktori output ada
     if not os.path.exists(output_directory):
@@ -32,7 +30,7 @@ def batch_wav_to_midi(input_directory, output_directory, model_path=ICASSP_2022_
     for wav_file_path in wav_files:
         print(f"Memproses file: {wav_file_path}")
         try:
-            # Gunakan fungsi Basic Pitch untuk mengonversi dan menyimpan hasilnya
+            # Fungsi Basic Pitch untuk mengonversi dan menyimpan hasilnya
             predict_and_save(
                 audio_path_list=[wav_file_path],
                 output_directory=output_directory,
@@ -44,7 +42,7 @@ def batch_wav_to_midi(input_directory, output_directory, model_path=ICASSP_2022_
             )
             print(f"Berhasil dikonversi: {wav_file_path}")
         except Exception as e:
-            print(f"Gagal memproses file {wav_file_path}. Error: {e}")
+            print(f"Gagal memroses file {wav_file_path}. Error: {e}")
 
     print(f"Semua file WAV selesai dikonversi. File MIDI disimpan di: {output_directory}")
 
@@ -52,10 +50,10 @@ def batch_wav_to_midi(input_directory, output_directory, model_path=ICASSP_2022_
 # Contoh penggunaan
 if __name__ == "__main__":
     # Folder input yang berisi file WAV
-    input_dir = "sounds"  # Ganti dengan folder tempat file WAV Anda
+    input_dir = "sounds"  # Ganti dengan folder tempat file WAV 
     
     # Folder output untuk menyimpan file MIDI
     output_dir = "output_midi"
 
-    # Panggil fungsi untuk memproses semua file WAV
+    # Panggil fungsi untuk memroses semua file WAV
     batch_wav_to_midi(input_dir, output_dir)

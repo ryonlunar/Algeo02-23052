@@ -17,6 +17,7 @@ print(f"Audio Route - AUDIO_FOLDER: {AUDIO_FOLDER}")
 
 @router.post("/audio-search")
 async def search_similar_audio(file: UploadFile = File(...)):
+    print(UploadFile)
     temp = None
     try:
         print("Starting audio search process...")

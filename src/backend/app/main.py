@@ -2,14 +2,17 @@ import os
 import uuid
 import shutil
 import time
+from fastapi.responses import FileResponse
+from fastapi import BackgroundTasks
 from fastapi import FastAPI, UploadFile, File, Depends, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
-from .routes.image import router as image_router
-from .routes.audio_routes import router as audio_router
+from routes.image import router as image_router
+from routes.audio_routes import router as audio_router
+from routes.mic.microphone import record_audio
 
 # Database ORM setup
 Base = declarative_base()
@@ -185,6 +188,56 @@ async def get_audios(db: Session = Depends(get_db)):
 @app.get("/")
 async def read_root():
     return {"message": "Welcome to the Music Album API!"}
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Absolute path to the script directory
+INPUT_DIR = os.path.join(BASE_DIR, "routes/mic/recorded_input")
+OUTPUT_DIR = os.path.join(BASE_DIR, "routes/mic/recorded_output")
+
+@app.post("/start-recording")
+async def start_record(bg_task: BackgroundTasks):
+    """Endpoint to start audio recording"""
+    bg_task.add_task(record_audio)  # Start recording in the background
+    return {"message": "Recording started..."}
+
+@app.post("/get-midi-file")
+async def get_midi_file():
+    """Fetch list of MIDI files from the output directory"""
+    try:
+        midi_files = [file for file in os.listdir(OUTPUT_DIR) if file.endswith('.mid')]
+        if not midi_files:
+            raise HTTPException(status_code=404, detail="No MIDI files found")
+        return {"midi_files": midi_files}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving MIDI files: {str(e)}")
+
+@app.get("/get-recorded-audio/")
+async def get_recorded_audio():
+    """Return the most recent recorded MIDI file"""
+    try:
+        # Debugging: Print the contents of the OUTPUT_DIR
+        print("Checking the files in OUTPUT_DIR:", OUTPUT_DIR)
+        midi_files = [file for file in os.listdir(OUTPUT_DIR) if file.endswith('.mid')]
+        
+        # Debugging: Print the list of .mid files found
+        print("MIDI files found:", midi_files)
+        
+        if midi_files:
+            # Sort the MIDI files and get the most recent one by name
+            latest_midi = sorted(midi_files)[-1]
+            file_path = os.path.join(OUTPUT_DIR, latest_midi)
+            
+            # Debugging: Print the file path being returned
+            print("Returning MIDI file:", file_path)
+            
+            # Return the MIDI file as a response
+            return FileResponse(path=file_path, media_type='audio/midi')
+        else:
+            raise HTTPException(status_code=404, detail="No recorded MIDI found")
+    except Exception as e:
+        # Debugging: Print the error message for troubleshooting
+        print(f"Error retrieving recorded MIDI: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving recorded MIDI: {str(e)}")
+
 
 if __name__ == "__main__":
     import uvicorn

@@ -34,7 +34,7 @@ const AudioRetrievalPage = () => {
       similarity: similarityScores[index] * 100,
     }))
     .sort((a, b) => b.similarity - a.similarity)
-    .filter((result) => result.similarity >= 70);
+    .filter((result) => result.similarity >= 0);
 
   const totalPages = Math.ceil(filteredAndSortedResults.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
