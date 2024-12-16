@@ -1,0 +1,97 @@
+/* Audio Result Styles */
+.result-audio-player {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    background-color: #002b4d;
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+.play-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.play-button:hover {
+    transform: scale(1.1);
+    transition: transform 0.2s ease;
+}
+
+.play-button:active {
+    transform: scale(0.95);
+}
+
+/* Modified Result Item for Audio */
+.results-grid .result-item {
+    width: 200px;
+    height: auto;
+    background-color: #002b4d;
+    padding: 15px;
+    border-radius: 8px;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.results-grid .result-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Result Info Styles */
+.result-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    text-align: center;
+}
+
+.result-name {
+    font-size: 14px;
+    color: white;
+    margin-bottom: 4px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.result-similarity {
+    font-size: 12px;
+    color: #8bb4fe;
+}
+
+/* Audio Controls */
+audio {
+    display: none;
+}
+
+/* Responsive Grid */
+@media (max-width: 1536px) {
+    .results-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 1280px) {
+    .results-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 1024px) {
+    .results-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .results-grid {
+        grid-template-columns: repeat(1, 1fr);
+    }
+}
