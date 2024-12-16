@@ -141,18 +141,15 @@ const PictureModal: React.FC<PictureModalProps> = ({ isOpen, onClose }) => {
   );
 };
 
+// Audio Modal for audio retrieval
 interface AudioModalProps {
   isOpen: boolean;
   onClose: (submitted: boolean, file?: File, similarAudios?: string[], similarityScores?: number[], executionTime?: number) => void;
 }
 
-// Di bagian component AudioModal, sebelum return statement:
-
 const AudioModal: React.FC<AudioModalProps> = ({ isOpen, onClose }) => {
   const [file, setFile] = useState<File | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const controller = useRef<AbortController | null>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
@@ -162,48 +159,30 @@ const AudioModal: React.FC<AudioModalProps> = ({ isOpen, onClose }) => {
 
   const handleSubmitAudio = async () => {
     if (!file) return;
-
+  
     const formData = new FormData();
     formData.append("file", file);
-
-    controller.current = new AbortController();
-    setIsProcessing(true);
-
+  
     try {
-        const startTime = performance.now();
-        const response = await fetch("http://localhost:8000/api/audio-search", {
-            method: "POST",
-            body: formData,
-            signal: controller.current.signal
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
+      const startTime = performance.now();
+      const response = await fetch("http://localhost:8000/api/audio-search", {
+        method: "POST",
+        body: formData,
+      });
+      const endTime = performance.now();
+  
+      if (response.ok) {
         const data = await response.json();
-        const executionTime = data.execution_time || performance.now() - startTime;
+        const executionTime = data.execution_time || endTime - startTime;
         onClose(true, file, data.similar_audios, data.similarity_scores, executionTime);
-    } catch (error) {
-        if (error.name === 'AbortError') {
-            console.log('Request was cancelled');
-        } else {
-            console.error("Error searching audio:", error);
-        }
+      } else {
+        console.error("Audio search failed");
         onClose(false);
-    } finally {
-        setIsProcessing(false);
-        controller.current = null;
+      }
+    } catch (error) {
+      console.error("Error searching audio:", error);
+      onClose(false);
     }
-  };
-
-  const handleCancel = () => {
-    if (isProcessing && controller.current) {
-        controller.current.abort();
-    }
-    setFile(null);
-    setIsProcessing(false);
-    onClose(false);
   };
 
   if (!isOpen) return null;
@@ -223,9 +202,9 @@ const AudioModal: React.FC<AudioModalProps> = ({ isOpen, onClose }) => {
           />
         </div>
         <div className="modal-actions">
-          <button onClick={handleCancel}>Cancel</button>
+          <button onClick={() => onClose(false)}>Cancel</button>
           <button onClick={handleSubmitAudio} disabled={!file}>
-            {isProcessing ? 'Processing...' : 'Find'}
+            Find
           </button>
         </div>
       </div>
@@ -233,6 +212,143 @@ const AudioModal: React.FC<AudioModalProps> = ({ isOpen, onClose }) => {
   );
 };
 
+interface MicModalProps {
+  isOpen: boolean;
+  onClose: (submitted: boolean, file?: File, similarAudios?: string[], similarityScores?: number[], executionTime?: number) => void;
+}
+
+const MicrophoneModal: React.FC<MicModalProps> = ({ isOpen, onClose }) => {
+  const [isRecording, setIsRecording] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Handle start recording
+  const handleStartRecording = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/start-recording/", {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        setIsRecording(true);
+        setError(null); // Clear any previous errors
+        console.log("Recording started...");
+
+        // Wait for 25 seconds (assuming that's the backend recording time)
+        setTimeout(async () => {
+          setIsRecording(false);
+          setIsProcessing(true);
+
+          try {
+            // Fetch the recorded audio file after 25 seconds
+            const audioResponse = await fetch("http://localhost:8000/get-recorded-audio/");
+
+            if (!audioResponse.ok) {
+              throw new Error("Failed to fetch recorded audio");
+            }
+
+            const audioBlob = await audioResponse.blob();
+            const audioFile = new File([audioBlob], "recorded_audio.mid", { type: "audio/mid" });
+
+            // Simulate processing the MIDI file (this could be an API call or further processing)
+            console.log("Audio recording completed:", audioFile);
+
+            // Simulate the process completion
+            setIsProcessing(false);
+            // Replace with a more user-friendly UI update
+
+            // Call the second API here (after processing the MIDI file)
+            await fetchDataFromApi(audioFile);
+
+          } catch (error) {
+            console.error("Error fetching or processing audio:", error);
+            setError("Error during audio processing.");
+            setIsProcessing(false);
+          }
+        }, 25000); // Wait for 25 seconds for the recording to complete
+      } else {
+        console.error("Failed to start recording");
+        setError("Failed to start recording");
+        setIsRecording(false);
+      }
+    } catch (error) {
+      console.error("Error starting recording:", error);
+      setError("Error during recording");
+      setIsRecording(false);
+      setIsProcessing(false);
+    }
+  };
+
+  // Fetch additional data after processing the audio
+  const fetchDataFromApi = async (micFile: File) => {
+    try {
+      // Here, we send the audioFile to the API after processing
+      const formData = new FormData();
+      formData.append("file", micFile);
+
+      const startTime = performance.now();
+      const apiResponse = await fetch("http://localhost:8000/api/audio-search-mic", {
+        method: "POST",
+        body: formData,
+      });
+      const endTime = performance.now()
+
+      if (apiResponse.ok) {
+        const data = await apiResponse.json();
+        const executionTime = data.execution_time || endTime - startTime;
+        onClose(true, micFile, data.similar_audios, data.similarity_scores, executionTime);
+      } else {
+        console.error("Audio search failed");
+        onClose(false);
+      }
+    } catch (error) {
+      console.error("Error searching audio:", error);
+      onClose(false);
+    }
+  };
+
+  // Handle cancellation
+  const handleCancel = () => {
+    // Reset states and close modal
+    setIsRecording(false);
+    setIsProcessing(false);
+    setError(null);
+    if (onClose) {
+      onClose(false); // Signal that no action was completed
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <h2 className="modal-title">Record Audio for Search</h2>
+        <div className="modal-actions">
+          <button onClick={handleCancel}>Cancel</button>
+          {!isRecording ? (
+            <button onClick={handleStartRecording}>Start Recording</button>
+          ) : (
+            <button disabled>Recording...</button>
+          )}
+        </div>
+        {isProcessing && (
+          <div>
+            <p>Processing the audio...</p>
+          </div>
+        )}
+        {error && (
+          <div style={{ color: 'red' }}>
+            <p>{error}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+
+// Main Sidebar component
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
 
@@ -242,6 +358,7 @@ const Sidebar: React.FC = () => {
   const [showMapperModal, setShowMapperModal] = useState(false);
   const [showPictureModal, setShowPictureModal] = useState(false);
   const [showAudioSearchModal, setShowAudioSearchModal] = useState(false);
+  const [showMicSearchModal, setShowMicSearchModal] = useState(false);
 
   const [uploadedFiles, setUploadedFiles] = useState({
     image: "",
@@ -321,6 +438,37 @@ const Sidebar: React.FC = () => {
     setShowAudioSearchModal(false);
   };
 
+  const handleMicRetrieval = (
+    submitted: boolean,
+    file?: File,
+    similarAudios?: string[],
+    similarityScores?: number[],
+    executionTime?: number
+  ) => {
+    if (submitted && file) {
+      // Set the query audio file
+      setQueryAudio(file);
+  
+      // Ensure `similarAudios` and `similarityScores` are not undefined before updating the state
+      setSimilarAudios(similarAudios ?? []);
+      setAudioSimilarityScores(similarityScores ?? []);
+  
+      // Navigate to another page with the provided state
+      navigate("/audio-retrieval", {
+        state: {
+          queryAudio: file,
+          similarAudios: similarAudios ?? [],
+          similarityScores: similarityScores ?? [],
+          executionTime, // This can be undefined if it's not passed, which is fine
+        },
+      });
+    } else {
+      console.error("Submission failed or no file found");
+    }
+    // Close the microphone modal after retrieval
+    setShowMicSearchModal(false);
+  };
+
   const handleSubmitAll = async () => {
     if (!selectedFiles.image && !selectedFiles.audio && !selectedFiles.mapper) {
       alert("Please upload at least one file before submitting.");
@@ -390,46 +538,24 @@ const Sidebar: React.FC = () => {
             />
           </div>
         ) : queryAudio ? (
-          <div
-            className="query-audio"
-            style={{
-              display: "flex",
-              flexDirection: "column", 
-              justifyContent: "center", 
-              alignItems: "center", 
-              height: "100%", 
-            }}
-          >
+          <div className="query-audio">
             <img
               src="/src/assets/icon.png"
               alt="Audio Icon"
               style={{
-                maxWidth: "200px",
-                maxHeight: "110px",
+                maxWidth: "240px",
+                maxHeight: "150px",
                 objectFit: "contain",
               }}
             />
-            <div className="audio-teks">
-              <p style={{ margin: "10px 0 0 0", textAlign: "center" }}>
-                {queryAudio.name}
-              </p>
-            </div>
+            <p>{queryAudio.name}</p>
           </div>
         ) : (
-          <div className="uploaded-files">
-            <p>
-              <span className="file-label">Image:</span>{" "}
-              <span className="file-value">{uploadedFiles.image || "None"}</span>
-            </p>
-            <p>
-              <span className="file-label">Audio:</span>{" "}
-              <span className="file-value">{uploadedFiles.audio || "None"}</span>
-            </p>
-            <p>
-              <span className="file-label">Mapper:</span>{" "}
-              <span className="file-value">{uploadedFiles.mapper || "None"}</span>
-            </p>
-          </div>
+          <>
+            <p>Image: {uploadedFiles.image || "None"}</p>
+            <p>Audio: {uploadedFiles.audio || "None"}</p>
+            <p>Mapper: {uploadedFiles.mapper || "None"}</p>
+          </>
         )}
       </div>
 
@@ -462,6 +588,10 @@ const Sidebar: React.FC = () => {
         Audio
       </button>
 
+      <button className="sidebar-button" onClick={() => setShowMicSearchModal(true)}>
+        Microphone
+      </button>
+
       <UploadModal
         isOpen={showImageModal}
         onClose={(submitted, fileName, file) => {
@@ -491,10 +621,10 @@ const Sidebar: React.FC = () => {
           setShowMapperModal(false);
         }}
         title="Mapper"
-        accept=".txt"
       />
       <PictureModal isOpen={showPictureModal} onClose={handlePictureRetrieval} />
       <AudioModal isOpen={showAudioSearchModal} onClose={handleAudioRetrieval} />
+      <MicrophoneModal isOpen={showMicSearchModal} onClose={handleMicRetrieval} />
     </div>
   );
 };
