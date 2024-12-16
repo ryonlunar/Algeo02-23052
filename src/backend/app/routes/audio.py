@@ -4,19 +4,22 @@ import os
 import numpy as np
 from typing import List, Tuple
 
-def extract_melody(midi_path: str) -> List[int]:
+def extract_melody(midi_path: str) -> List[Tuple[int, int]]:
     """Extract melody notes from MIDI file."""
     try:
         midi = MidiFile(midi_path)
         notes = []
+        current_time = 0
         
         for track in midi.tracks:
             for msg in track:
+                current_time += msg.time
+                
                 if (isinstance(msg, Message) and 
                     msg.type == 'note_on' and 
                     msg.velocity > 0 and 
                     msg.channel == 0):
-                    notes.append(msg.note)
+                    notes.append((current_time, msg.note))
                     
                     # Limit the number of notes to prevent excessive processing
                     if len(notes) >= 1000:
@@ -26,40 +29,72 @@ def extract_melody(midi_path: str) -> List[int]:
     except Exception as e:
         print(f"Error extracting melody from {midi_path}: {str(e)}")
         return []
+    
+def normalize_melody(notes: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+    """Normalize pitch in melody using z-score normalization."""
+    pitches = [note[1] for note in notes]
+    
+    mean = np.mean(pitches)
+    std = np.std(pitches)
+    
+    if std == 0:
+        std = 1
+        
+    normalized_notes = [(note[0], (note[1] - mean) / std) for note in notes]
+    
+    return normalized_notes 
 
-def create_feature_vector(notes: List[int]) -> np.ndarray:
+def windowing(normalized_notes: List[Tuple[int, int]], window_size: int = 40, window_slide: int = 8) -> List[List[Tuple[int, int]]]:
+    """Apply sliding window technique to the melody."""
+    windows = []
+    
+    # Ensure the number of notes is sufficient for windowing
+    if len(normalized_notes) < window_size:
+        print("Not enough notes to form a window. Returning empty list.")
+        return windows
+    
+    # Slide the window over the melody with a given window size and step
+    for i in range(0, len(normalized_notes) - window_size + 1, window_slide):
+        window = normalized_notes[i:i + window_size]
+        windows.append(window)
+
+    return windows
+
+def create_feature_vector(notes: List[Tuple[int, int]]) -> np.ndarray:
     """Create feature vector from notes using pitch histograms."""
-    if not notes:
+    pitches = [note[1] for note in notes]
+    
+    if not pitches:
         return np.zeros(638)  # 128 + 255 + 255 total bins
         
     # Pitch histogram (ATB)
-    pitch_hist, _ = np.histogram(notes, bins=128, range=(0, 128))
-    pitch_hist = pitch_hist / (np.sum(pitch_hist) + 1e-8)
+    atb_hist, _ = np.histogram(pitches, bins=128, range=(0, 128))
+    atb_hist = atb_hist / (np.sum(atb_hist) + 1e-8)
     
     # Interval histogram (RTB)
-    intervals = np.diff(notes)
-    interval_hist, _ = np.histogram(intervals, bins=255, range=(-127, 128))
-    interval_hist = interval_hist / (np.sum(interval_hist) + 1e-8)
+    intervals = np.diff(pitches)
+    rtb_hist, _ = np.histogram(intervals, bins=255, range=(-127, 128))
+    rtb_hist = rtb_hist / (np.sum(rtb_hist) + 1e-8)
     
     # First-note relative histogram (FTB)
-    if len(notes) > 0:
-        first_note = notes[0]
-        relative = np.array(notes) - first_note
-        relative_hist, _ = np.histogram(relative, bins=255, range=(-127, 128))
-        relative_hist = relative_hist / (np.sum(relative_hist) + 1e-8)
+    if len(pitches) > 0:
+        first_note = pitches[0]
+        relative = np.array(pitches) - first_note
+        ftb_hist, _ = np.histogram(relative, bins=255, range=(-127, 128))
+        ftb_hist = ftb_hist / (np.sum(ftb_hist) + 1e-8)
     else:
-        relative_hist = np.zeros(255)
+        ftb_hist = np.zeros(255)
     
     # Combine features
-    return np.concatenate([pitch_hist, interval_hist, relative_hist])
+    return np.concatenate([atb_hist, rtb_hist, ftb_hist])
 
 def cosine_similarity(v1: np.ndarray, v2: np.ndarray) -> float:
     """Calculate cosine similarity between two vectors."""
-    norm1 = np.linalg.norm(v1)
-    norm2 = np.linalg.norm(v2)
-    if norm1 == 0 or norm2 == 0:
+    magnitude1 = np.linalg.norm(v1)
+    magnitude2 = np.linalg.norm(v2)
+    if magnitude1 == 0 or magnitude2 == 0:
         return 0
-    return np.dot(v1, v2) / (norm1 * norm2)
+    return np.dot(v1, v2) / (magnitude1 * magnitude2)
 
 def audio_retrieval_main(query_path: str, audio_folder: str, n: int = 10) -> Tuple[List[str], List[float]]:
     """Main function for audio retrieval."""
