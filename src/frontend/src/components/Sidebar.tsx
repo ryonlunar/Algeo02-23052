@@ -2,14 +2,14 @@ import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Sidebar.css";
 
-// Upload Modal for regular file uploads
 interface UploadModalProps {
   isOpen: boolean;
   onClose: (submitted?: boolean, fileName?: string, file?: File) => void;
   title: string;
+  accept?: string;
 }
 
-const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, title }) => {
+const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, title, accept }) => {
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -31,7 +31,7 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, title }) => 
 
   const handleSaveLocally = () => {
     if (file) {
-      if (file.type === 'application/zip') {
+      if (file.type === "application/zip") {
         onClose(true, file.name, file);
       } else {
         onClose(true, file.name, file);
@@ -57,7 +57,7 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, title }) => 
             ref={fileInputRef}
             onChange={handleFileSelect}
             style={{ display: "none" }}
-            accept={title === "Image" ? ".zip,image/*" : title === "Audio" ? ".zip,audio/*" : "*"}
+            accept={accept || (title === "Image" ? ".zip,image/*" : title === "Audio" ? ".zip,audio/*" : "*")}
           />
         </div>
         <div className="modal-actions">
@@ -71,7 +71,6 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, title }) => 
   );
 };
 
-// Picture Modal for image retrieval
 interface PictureModalProps {
   isOpen: boolean;
   onClose: (submitted: boolean, file?: File, similarImages?: string[], similarityScores?: number[], executionTime?: number) => void;
@@ -142,7 +141,6 @@ const PictureModal: React.FC<PictureModalProps> = ({ isOpen, onClose }) => {
   );
 };
 
-// Audio Modal for audio retrieval
 interface AudioModalProps {
   isOpen: boolean;
   onClose: (submitted: boolean, file?: File, similarAudios?: string[], similarityScores?: number[], executionTime?: number) => void;
@@ -160,10 +158,10 @@ const AudioModal: React.FC<AudioModalProps> = ({ isOpen, onClose }) => {
 
   const handleSubmitAudio = async () => {
     if (!file) return;
-  
+
     const formData = new FormData();
     formData.append("file", file);
-  
+
     try {
       const startTime = performance.now();
       const response = await fetch("http://localhost:8000/api/audio-search", {
@@ -171,7 +169,7 @@ const AudioModal: React.FC<AudioModalProps> = ({ isOpen, onClose }) => {
         body: formData,
       });
       const endTime = performance.now();
-  
+
       if (response.ok) {
         const data = await response.json();
         const executionTime = data.execution_time || endTime - startTime;
@@ -213,7 +211,6 @@ const AudioModal: React.FC<AudioModalProps> = ({ isOpen, onClose }) => {
   );
 };
 
-// Main Sidebar component
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
 
@@ -450,6 +447,7 @@ const Sidebar: React.FC = () => {
           setShowMapperModal(false);
         }}
         title="Mapper"
+        accept=".txt"
       />
       <PictureModal isOpen={showPictureModal} onClose={handlePictureRetrieval} />
       <AudioModal isOpen={showAudioSearchModal} onClose={handleAudioRetrieval} />

@@ -12,6 +12,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from .routes.image import router as image_router
 from .routes.audio_routes import router as audio_router
+from fastapi.responses import FileResponse
 
 Base = declarative_base()
 
@@ -61,6 +62,25 @@ def sanitize_filename(filename: str) -> str:
     extension = os.path.splitext(filename)[1]
     sanitized_base = re.sub(r'[^a-zA-Z0-9_.-]', '_', base_name.replace(' ', '_'))
     return f"{sanitized_base}{extension}"
+
+def is_valid_audio_file(filename: str) -> bool:
+    return filename.lower().endswith(('.mid', '.midi'))
+
+def is_valid_image_file(filename: str) -> bool:
+    return filename.lower().endswith(('.jpg', '.jpeg', '.png'))
+
+def validate_mapper_line(line: str) -> tuple[bool, str, str]:
+    try:
+        if not line.strip():
+            return False, "", ""
+            
+        audio_file, image_file = line.strip().split('\t')
+        if is_valid_audio_file(audio_file) and is_valid_image_file(image_file):
+            return True, audio_file, image_file
+            
+        return False, "", ""
+    except ValueError:
+        return False, "", ""
 
 def sync_folder_to_db(db: Session):
     print("Starting database sync...")
@@ -176,6 +196,14 @@ app.mount("/temp", StaticFiles(directory=TEMP_DIR), name="temp")
 app.include_router(image_router, prefix="/api")
 app.include_router(audio_router, prefix="/api")
 
+@app.get("/mapper.txt")
+async def get_mapper():
+    MAPPER_PATH = os.path.join(BASE_DIR, 'mapper.txt')
+    if os.path.exists(MAPPER_PATH):
+        return FileResponse(MAPPER_PATH)
+    else:
+        raise HTTPException(status_code=404, detail="Mapper file not found")
+
 @app.post("/upload-zip")
 async def upload_zip(file: UploadFile = File(...), db: Session = Depends(get_db)):
     if not file.filename.lower().endswith('.zip'):
@@ -250,6 +278,30 @@ async def upload_zip(file: UploadFile = File(...), db: Session = Depends(get_db)
     finally:
         # Clean up temp directory
         shutil.rmtree(temp_dir, ignore_errors=True)
+
+async def append_to_mapper(file: UploadFile):
+    if not file.filename.endswith('.txt'):
+        raise HTTPException(
+            status_code=400,
+            detail="Mapper file must be a .txt file"
+        )
+    
+    MAPPER_PATH = os.path.join(BASE_DIR, 'mapper.txt')
+    
+    if not os.path.exists(MAPPER_PATH):
+        with open(MAPPER_PATH, 'w', encoding='utf-8') as f:
+            pass
+    
+    content = await file.read()
+    content_str = content.decode('utf-8')
+    
+    if not content_str.endswith('\n'):
+        content_str += '\n'
+    
+    with open(MAPPER_PATH, 'a', encoding='utf-8') as mapper_file:
+        mapper_file.write(content_str)
+    
+    return {"message": "Mapper content appended successfully"}
 
 @app.post("/submit-all")
 async def submit_all(
@@ -387,17 +439,12 @@ async def submit_all(
         # Process mapper file
         if mapper:
             print(f"Processing mapper: {mapper.filename}")
-            sanitized_name = sanitize_filename(mapper.filename)
-            file_path = os.path.join(TEMP_DIR, sanitized_name)
-            
-            with open(file_path, "wb") as buffer:
-                shutil.copyfileobj(mapper.file, buffer)
+            await append_to_mapper(mapper)
             responses.append({
-                "file": sanitized_name,
+                "file": mapper.filename,
                 "type": "mapper",
-                "path": file_path
+                "status": "appended"
             })
-            print(f"Processed mapper file: {sanitized_name}")
 
         db.commit()
         print("All files processed successfully")

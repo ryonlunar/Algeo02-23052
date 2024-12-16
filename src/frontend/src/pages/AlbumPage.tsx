@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import './AlbumPage.css';
+import AudioDetailsModal from './AudioDetail';
 
 const AlbumPage: React.FC = () => {
     const [albums, setAlbums] = useState<any[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 18; 
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const itemsPerPage = 18;
 
     useEffect(() => {
         axios.get('http://localhost:8000/albums')
@@ -27,14 +30,17 @@ const AlbumPage: React.FC = () => {
         setCurrentPage(page);
     };
 
+    const handleAlbumClick = (imageName: string) => {
+        setSelectedImage(imageName);
+        setIsModalOpen(true);
+    };
+
     const renderPaginationButtons = () => {
         const buttons = [];
-        const maxVisibleButtons = 5; // Tampilkan maksimal 5 tombol nomor halaman
+        const maxVisibleButtons = 5;
     
         let startPage = Math.max(1, currentPage - 2);
         let endPage = Math.min(totalPages, startPage + maxVisibleButtons - 1);
-    
-        // Sesuaikan startPage jika endPage mencapai batas
         startPage = Math.max(1, endPage - maxVisibleButtons + 1);
     
         for (let i = startPage; i <= endPage; i++) {
@@ -55,16 +61,20 @@ const AlbumPage: React.FC = () => {
         <div className="album-page-main">
             <div className="album-grid">
                 {currentAlbums.map((album, index) => (
-                    <div key={index} className="album-item">
+                    <div 
+                        key={index} 
+                        className="album-item"
+                        onClick={() => handleAlbumClick(album.name)}
+                    >
                         <div className="album-cover">
                             <img 
                                 src={`http://localhost:8000/album_images/${album.name}`} 
                                 alt={album.name}
                             />
                         </div>
-                        <Link to={`/album/${album.name}`} className="album-link">
+                        <div className="album-link">
                             {album.name}
-                        </Link>
+                        </div>
                     </div>
                 ))}
             </div>
@@ -102,6 +112,12 @@ const AlbumPage: React.FC = () => {
                     {'>>'}
                 </button>
             </div>
+
+            <AudioDetailsModal 
+                imageFile={selectedImage}
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+            />
         </div>
     );
 };
