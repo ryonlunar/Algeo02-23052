@@ -13,6 +13,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from routes.image import router as image_router
 from routes.audio_routes import router as audio_router
 from routes.mic.microphone import record_audio
+from routes.mic.audiomic_router import router as audiomic_router
 
 # Database ORM setup
 Base = declarative_base()
@@ -75,6 +76,7 @@ app.mount("/temp", StaticFiles(directory=TEMP_DIR), name="temp")
 # Include image routes for retrieval functionality
 app.include_router(image_router, prefix="/api")
 app.include_router(audio_router, prefix="/api")
+app.include_router(audiomic_router, prefix="/api")
 
 @app.post("/upload-image")
 async def upload_image(file: UploadFile = File(...), db: Session = Depends(get_db)):
