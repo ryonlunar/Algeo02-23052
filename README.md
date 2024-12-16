@@ -1,4 +1,4 @@
-![Logo](logo.jpg)
+![Logo](logo.png)
 # BARMusic
 
 > Penerapan konsep materi Aljabar Linear dan Geometri dalam bentuk website _information retrieval_
@@ -29,6 +29,10 @@ Sebelum menjalankan proyek ini, pastikan Anda telah menginstal Python (maks. ver
 ### Struktur Program
 
 ```bash
+├── model/
+├── myenv/
+├── doc/
+├── test/
 ├── src/
     ├── backend/
         │   database.db
